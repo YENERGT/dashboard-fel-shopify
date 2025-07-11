@@ -217,7 +217,19 @@ export default function Dashboard() {
         </Card>
         
         {/* Métricas principales - Primera fila */}
-        <InlineGrid columns={6} gap="400">
+<InlineGrid 
+  columns={{
+    xs: 1,
+    sm: 2,
+    md: 3,
+    lg: 6
+  }} 
+  gap={{
+    xs: "200",
+    sm: "300",
+    md: "400"
+  }}
+>
           <Card>
             <BlockStack gap="200">
               <Text as="h3" variant="headingMd" tone="subdued">
@@ -286,7 +298,18 @@ export default function Dashboard() {
         </InlineGrid>
 
         {/* Segunda fila de métricas */}
-        <InlineGrid columns={3} gap="400">
+<InlineGrid 
+  columns={{
+    xs: 1,
+    sm: 1,
+    md: 3
+  }} 
+  gap={{
+    xs: "200",
+    sm: "300",
+    md: "400"
+  }}
+>
           <Card>
             <BlockStack gap="200">
               <Text as="h3" variant="headingMd" tone="subdued">
