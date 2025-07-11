@@ -46,15 +46,36 @@ const commonOptions = {
   }
 };
 
+
 export function VentasPorDiaChart({ ventasDiarias, tipo }) {
-  const dias = Object.keys(ventasDiarias).sort((a, b) => parseInt(a) - parseInt(b));
+  let labels, data, titulo;
   
-  const data = {
-    labels: dias.map(d => `Día ${d}`),
+  if (tipo === 'dia') {
+    // Para vista por día: mostrar horas
+    const horas = Array.from({ length: 24 }, (_, i) => i);
+    labels = horas.map(h => `${h}:00`);
+    data = horas.map(h => ventasDiarias[h] || 0);
+    titulo = "📈 Ventas por Hora del Día";
+  } else if (tipo === 'mes') {
+    // Para vista por mes: mostrar días
+    const dias = Object.keys(ventasDiarias).sort((a, b) => parseInt(a) - parseInt(b));
+    labels = dias.map(d => `Día ${d}`);
+    data = dias.map(d => ventasDiarias[d]);
+    titulo = "📈 Ventas por Día del Mes";
+  } else if (tipo === 'año') {
+    // Para vista por año: mostrar meses
+    const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+    labels = meses;
+    data = Array.from({ length: 12 }, (_, i) => ventasDiarias[i + 1] || 0);
+    titulo = "📈 Ventas por Mes del Año";
+  }
+
+  const chartData = {
+    labels: labels,
     datasets: [
       {
-        label: "Ventas por Día",
-        data: dias.map(d => ventasDiarias[d]),
+        label: tipo === 'dia' ? "Ventas por Hora" : tipo === 'mes' ? "Ventas por Día" : "Ventas por Mes",
+        data: data,
         borderColor: "rgb(76, 175, 80)",
         backgroundColor: "rgba(76, 175, 80, 0.2)",
         tension: 0.4,
@@ -92,15 +113,16 @@ export function VentasPorDiaChart({ ventasDiarias, tipo }) {
     <Card>
       <BlockStack gap="400">
         <Text as="h3" variant="headingMd">
-          📈 Ventas por Día
+          {titulo}
         </Text>
         <div style={{ height: "300px" }}>
-          <Line data={data} options={options} />
+          <Line data={chartData} options={options} />
         </div>
       </BlockStack>
     </Card>
   );
 }
+
 
 export function VentasPorHoraChart({ ventasPorHora }) {
   const horas = Array.from({ length: 24 }, (_, i) => i);

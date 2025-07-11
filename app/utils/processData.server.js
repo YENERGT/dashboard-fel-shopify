@@ -53,15 +53,27 @@ export function processSheetData(rawData, tipo, dia, mes, anio) {
     totalIVA += iva;
     
     const fecha = new Date(row[9]);
-    const diaNum = fecha.getDate();
-    const hora = fecha.getHours();
-    const mesNum = fecha.getMonth() + 1;
-    const semana = getWeekNumber(fecha);
-    
-    ventasDiarias[diaNum] = (ventasDiarias[diaNum] || 0) + venta;
-    ventasPorHora[hora] = (ventasPorHora[hora] || 0) + venta;
-    ventasPorMes[mesNum] = (ventasPorMes[mesNum] || 0) + venta;
-    ventasPorSemana[semana] = (ventasPorSemana[semana] || 0) + venta;
+const diaNum = fecha.getDate();
+const hora = fecha.getHours();
+const mesNum = fecha.getMonth() + 1;
+const semana = getWeekNumber(fecha);
+
+// Lógica según tipo de visualización
+if (tipo === 'dia') {
+  // Si es vista por día, guardamos ventas por hora
+  ventasDiarias[hora] = (ventasDiarias[hora] || 0) + venta;
+} else if (tipo === 'mes') {
+  // Si es vista por mes, guardamos ventas por día
+  ventasDiarias[diaNum] = (ventasDiarias[diaNum] || 0) + venta;
+} else if (tipo === 'año') {
+  // Si es vista por año, guardamos ventas por mes
+  ventasDiarias[mesNum] = (ventasDiarias[mesNum] || 0) + venta;
+}
+
+// Mantener estos para otros gráficos
+ventasPorHora[hora] = (ventasPorHora[hora] || 0) + venta;
+ventasPorMes[mesNum] = (ventasPorMes[mesNum] || 0) + venta;
+ventasPorSemana[semana] = (ventasPorSemana[semana] || 0) + venta;
     
     // Clientes
     const cliente = row[5]; // NOMBRE_NIT
