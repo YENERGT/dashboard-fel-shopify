@@ -344,71 +344,93 @@ export default function Dashboard() {
           </Card>
         </InlineGrid>
 
-        {/* Gráficos principales */}
-        <Layout>
-          <Layout.Section>
-            {data.ventasDiarias && Object.keys(data.ventasDiarias).length > 0 && (
-              <VentasPorDiaChart ventasDiarias={data.ventasDiarias} tipo={data.tipoVisualizacion} />
-            )}
-          </Layout.Section>
-          <Layout.Section>
-            {data.ventasPorHora && Object.keys(data.ventasPorHora).length > 0 && (
-              <VentasPorHoraChart ventasPorHora={data.ventasPorHora} />
-            )}
-          </Layout.Section>
-        </Layout>
+        {/* Gráfica principal de ventas */}
+{data.ventasDiarias && Object.keys(data.ventasDiarias).length > 0 && (
+  <div style={{ marginBottom: "20px" }}>
+    <VentasPorDiaChart ventasDiarias={data.ventasDiarias} tipo={data.tipoVisualizacion} />
+  </div>
+)}
 
-        <Layout>
-          <Layout.Section>
-            {data.topProductos && data.topProductos.length > 0 && (
-              <TopProductosChart topProductos={data.topProductos} />
-            )}
-          </Layout.Section>
-          <Layout.Section>
-            {data.estadosPedidos && (
-              <EstadosPedidosChart estadosPedidos={data.estadosPedidos} />
-            )}
-          </Layout.Section>
-        </Layout>
+{/* Primera fila de gráficas */}
+<InlineGrid 
+  columns={{
+    xs: 1,
+    sm: 1,
+    md: 2,
+    lg: 3
+  }} 
+  gap={{
+    xs: "300",
+    sm: "400",
+    md: "400"
+  }}
+>
+  {data.topProductos && data.topProductos.length > 0 && (
+    <TopProductosChart topProductos={data.topProductos} />
+  )}
+  
+  {data.estadosPedidos && (
+    <EstadosPedidosChart estadosPedidos={data.estadosPedidos} />
+  )}
+  
+  {data.topCiudades && data.topCiudades.length > 0 && (
+    <VentasPorCiudadChart topCiudades={data.topCiudades} />
+  )}
+</InlineGrid>
 
-        <Layout>
-          <Layout.Section>
-            {data.topCiudades && data.topCiudades.length > 0 && (
-              <VentasPorCiudadChart topCiudades={data.topCiudades} />
-            )}
-          </Layout.Section>
-          <Layout.Section>
-            {data.topDepartamentos && data.topDepartamentos.length > 0 && (
-              <VentasPorDepartamentoChart topDepartamentos={data.topDepartamentos} />
-            )}
-          </Layout.Section>
-        </Layout>
+{/* Segunda fila de gráficas */}
+<InlineGrid 
+  columns={{
+    xs: 1,
+    sm: 1,
+    md: 2,
+    lg: 3
+  }} 
+  gap={{
+    xs: "300",
+    sm: "400",
+    md: "400"
+  }}
+>
+  {data.topDepartamentos && data.topDepartamentos.length > 0 && (
+    <VentasPorDepartamentoChart topDepartamentos={data.topDepartamentos} />
+  )}
+  
+  {data.metodosPago && data.metodosPago.length > 0 && (
+    <MetodosPagoChart metodosPago={data.metodosPago} />
+  )}
+  
+  {data.categoriasProductos && Object.keys(data.categoriasProductos).length > 0 && (
+    <CategoriaProductosChart categoriasProductos={data.categoriasProductos} />
+  )}
+</InlineGrid>
 
-        <Layout>
-          <Layout.Section>
-            {data.metodosPago && data.metodosPago.length > 0 && (
-              <MetodosPagoChart metodosPago={data.metodosPago} />
-            )}
-          </Layout.Section>
-          <Layout.Section>
-            {data.categoriasProductos && Object.keys(data.categoriasProductos).length > 0 && (
-              <CategoriaProductosChart categoriasProductos={data.categoriasProductos} />
-            )}
-          </Layout.Section>
-        </Layout>
-
-        <Layout>
-          <Layout.Section>
-            {data.topMarcas && data.topMarcas.length > 0 && (
-              <MarcasVehiculosChart topMarcas={data.topMarcas} />
-            )}
-          </Layout.Section>
-          <Layout.Section>
-            {data.topNITs && data.topNITs.length > 0 && (
-              <TopNITsChart topNITs={data.topNITs} />
-            )}
-          </Layout.Section>
-        </Layout>
+{/* Tercera fila de gráficas */}
+<InlineGrid 
+  columns={{
+    xs: 1,
+    sm: 1,
+    md: 2,
+    lg: 3
+  }} 
+  gap={{
+    xs: "300",
+    sm: "400",
+    md: "400"
+  }}
+>
+  {data.topMarcas && data.topMarcas.length > 0 && (
+    <MarcasVehiculosChart topMarcas={data.topMarcas} />
+  )}
+  
+  {data.topNITs && data.topNITs.length > 0 && (
+    <TopNITsChart topNITs={data.topNITs} />
+  )}
+  
+  {/* Espacio vacío para mantener la alineación */}
+  <div></div>
+</InlineGrid>
+        
 
         {/* Tabla de Top 10 Clientes */}
         <Layout>

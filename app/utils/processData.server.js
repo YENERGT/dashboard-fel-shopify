@@ -1,4 +1,4 @@
-export function processSheetData(rawData, tipo, dia, mes, anio) {
+export function processSheetData(rawData, tipo, dia, mes, anio, incluirComparacion = true) {
   if (!rawData || rawData.length < 2) return null;
   
   const headers = rawData[0];
@@ -26,6 +26,55 @@ export function processSheetData(rawData, tipo, dia, mes, anio) {
         return true;
     }
   });
+
+  // Determinar fechas para período anterior
+let fechaInicioAnterior, fechaFinAnterior;
+let filteredDataAnterior = [];
+
+if (incluirComparacion) {
+  const fechaActual = new Date(parseInt(anio), parseInt(mes) - 1, parseInt(dia) || 1);
+  
+  switch (tipo) {
+    case 'dia':
+      // Día anterior
+      fechaInicioAnterior = new Date(fechaActual);
+      fechaInicioAnterior.setDate(fechaActual.getDate() - 1);
+      
+      filteredDataAnterior = data.filter(row => {
+        const fechaStr = row[9];
+        if (!fechaStr) return false;
+        const fecha = new Date(fechaStr);
+        return fecha.getDate() === fechaInicioAnterior.getDate() &&
+               fecha.getMonth() === fechaInicioAnterior.getMonth() &&
+               fecha.getFullYear() === fechaInicioAnterior.getFullYear();
+      });
+      break;
+      
+    case 'mes':
+      // Mes anterior
+      fechaInicioAnterior = new Date(fechaActual);
+      fechaInicioAnterior.setMonth(fechaActual.getMonth() - 1);
+      
+      filteredDataAnterior = data.filter(row => {
+        const fechaStr = row[9];
+        if (!fechaStr) return false;
+        const fecha = new Date(fechaStr);
+        return fecha.getMonth() === fechaInicioAnterior.getMonth() &&
+               fecha.getFullYear() === fechaInicioAnterior.getFullYear();
+      });
+      break;
+      
+    case 'año':
+      // Año anterior
+      filteredDataAnterior = data.filter(row => {
+        const fechaStr = row[9];
+        if (!fechaStr) return false;
+        const fecha = new Date(fechaStr);
+        return fecha.getFullYear() === parseInt(anio) - 1;
+      });
+      break;
+  }
+}
   
   // Variables para análisis
   let totalVentas = 0;
@@ -44,6 +93,10 @@ export function processSheetData(rawData, tipo, dia, mes, anio) {
   let nitTransacciones = {};
   let categoriasProductos = {};
   let ventasPorSemana = {};
+  let totalVentasAnterior = 0;
+  let totalIVAAnterior = 0;
+  let ventasDiariasAnterior = {};
+  let totalPedidosAnterior = 0;
   
   filteredData.forEach(row => {
     const venta = parseFloat(row[2]) || 0; // TOTAL_GENERAL
@@ -158,6 +211,37 @@ ventasPorSemana[semana] = (ventasPorSemana[semana] || 0) + venta;
       console.log('Error al procesar JSON:', e);
     }
   });
+
+  // Procesar datos del período anterior
+if (incluirComparacion && filteredDataAnterior.length > 0) {
+  filteredDataAnterior.forEach(row => {
+    const venta = parseFloat(row[2]) || 0;
+    const iva = parseFloat(row[3]) || 0;
+    
+    totalVentasAnterior += venta;
+    totalIVAAnterior += iva;
+    totalPedidosAnterior += 1;
+    
+    const fecha = new Date(row[9]);
+    const diaNum = fecha.getDate();
+    const hora = fecha.getHours();
+    const mesNum = fecha.getMonth() + 1;
+    
+    if (tipo === 'dia') {
+      ventasDiariasAnterior[hora] = (ventasDiariasAnterior[hora] || 0) + venta;
+    } else if (tipo === 'mes') {
+      ventasDiariasAnterior[diaNum] = (ventasDiariasAnterior[diaNum] || 0) + venta;
+    } else if (tipo === 'año') {
+      ventasDiariasAnterior[mesNum] = (ventasDiariasAnterior[mesNum] || 0) + venta;
+    }
+  });
+}
+
+// Calcular porcentajes de cambio
+const calcularPorcentajeCambio = (actual, anterior) => {
+  if (anterior === 0) return actual > 0 ? 100 : 0;
+  return ((actual - anterior) / anterior) * 100;
+};
   
   // Análisis adicionales
   const diasConVentas = Object.keys(ventasDiarias).length;
@@ -268,9 +352,42 @@ ventasPorSemana[semana] = (ventasPorSemana[semana] || 0) + venta;
     ventaMaxima,
     ventaMinima,
     tendencia,
-    tipoVisualizacion: tipo
+    tipoVisualizacion: tipo,
+    // NUEVOS CAMPOS
+    ventasDiariasAnterior,
+    comparacion: {
+      totalVentas: {
+        anterior: totalVentasAnterior,
+        cambio: calcularPorcentajeCambio(totalVentas, totalVentasAnterior)
+      },
+      totalIVA: {
+        anterior: totalIVAAnterior,
+        cambio: calcularPorcentajeCambio(totalIVA, totalIVAAnterior)
+      },
+      ventasNetas: {
+        anterior: totalVentasAnterior - totalIVAAnterior,
+        cambio: calcularPorcentajeCambio(totalVentas - totalIVA, totalVentasAnterior - totalIVAAnterior)
+      },
+      totalPedidos: {
+        anterior: totalPedidosAnterior,
+        cambio: calcularPorcentajeCambio(filteredData.length, totalPedidosAnterior)
+      },
+      promedioPorPedido: {
+        anterior: totalPedidosAnterior > 0 ? totalVentasAnterior / totalPedidosAnterior : 0,
+        cambio: calcularPorcentajeCambio(
+          filteredData.length > 0 ? totalVentas / filteredData.length : 0,
+          totalPedidosAnterior > 0 ? totalVentasAnterior / totalPedidosAnterior : 0
+        )
+      },
+      promedioDiario: {
+        anterior: totalVentasAnterior / Math.max(Object.keys(ventasDiariasAnterior).length, 1),
+        cambio: calcularPorcentajeCambio(
+          diasConVentas > 0 ? totalVentas / diasConVentas : 0,
+          totalVentasAnterior / Math.max(Object.keys(ventasDiariasAnterior).length, 1)
+        )
+      }
+    }
   };
-}
 
 // Función para extraer zona
 function extraerZona(direccion) {
