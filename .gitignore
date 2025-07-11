@@ -1,0 +1,44 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Production
+build/
+dist/
+.cache/
+
+# Environment files
+.env
+.env.*
+env.yaml
+
+# Database
+*.sqlite
+*.sqlite3
+prisma/dev.db
+dev.sqlite
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Shopify
+.shopify/
+
+# Google Cloud
+.gcloudignore
+
+# Misc
+*.swp
+*.swo
+*~
