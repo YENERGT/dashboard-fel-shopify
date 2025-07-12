@@ -28,7 +28,6 @@ export function processSheetData(rawData, tipo, dia, mes, anio, incluirComparaci
   });
 
   // Determinar fechas para período anterior
-let fechaInicioAnterior, fechaFinAnterior;
 let filteredDataAnterior = [];
 
 if (incluirComparacion) {
@@ -37,40 +36,42 @@ if (incluirComparacion) {
   switch (tipo) {
     case 'dia':
       // Día anterior
-      fechaInicioAnterior = new Date(fechaActual);
-      fechaInicioAnterior.setDate(fechaActual.getDate() - 1);
+      const fechaAnterior = new Date(fechaActual);
+      fechaAnterior.setDate(fechaActual.getDate() - 1);
       
       filteredDataAnterior = data.filter(row => {
         const fechaStr = row[9];
         if (!fechaStr) return false;
         const fecha = new Date(fechaStr);
-        return fecha.getDate() === fechaInicioAnterior.getDate() &&
-               fecha.getMonth() === fechaInicioAnterior.getMonth() &&
-               fecha.getFullYear() === fechaInicioAnterior.getFullYear();
+        return fecha.getDate() === fechaAnterior.getDate() &&
+               fecha.getMonth() === fechaAnterior.getMonth() &&
+               fecha.getFullYear() === fechaAnterior.getFullYear();
       });
       break;
       
     case 'mes':
       // Mes anterior
-      fechaInicioAnterior = new Date(fechaActual);
-      fechaInicioAnterior.setMonth(fechaActual.getMonth() - 1);
+      const fechaMesAnterior = new Date(fechaActual);
+      fechaMesAnterior.setMonth(fechaActual.getMonth() - 1);
       
       filteredDataAnterior = data.filter(row => {
         const fechaStr = row[9];
         if (!fechaStr) return false;
         const fecha = new Date(fechaStr);
-        return fecha.getMonth() === fechaInicioAnterior.getMonth() &&
-               fecha.getFullYear() === fechaInicioAnterior.getFullYear();
+        return fecha.getMonth() === fechaMesAnterior.getMonth() &&
+               fecha.getFullYear() === fechaMesAnterior.getFullYear();
       });
       break;
       
     case 'año':
       // Año anterior
+      const anioAnterior = parseInt(anio) - 1;
+      
       filteredDataAnterior = data.filter(row => {
         const fechaStr = row[9];
         if (!fechaStr) return false;
         const fecha = new Date(fechaStr);
-        return fecha.getFullYear() === parseInt(anio) - 1;
+        return fecha.getFullYear() === anioAnterior;
       });
       break;
   }
@@ -510,4 +511,5 @@ function calcularTendencia(ventasDiarias) {
   if (diferencia > 10) return 'up';
   if (diferencia < -10) return 'down';
   return 'neutral';
+}
 }

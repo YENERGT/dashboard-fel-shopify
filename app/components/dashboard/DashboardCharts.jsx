@@ -47,26 +47,29 @@ const commonOptions = {
 };
 
 
-export function VentasPorDiaChart({ ventasDiarias, tipo }) {
-  let labels, datosActuales, titulo;
+export function VentasPorDiaChart({ ventasDiarias, ventasDiariasAnterior, tipo }) {
+  let labels, datosActuales, datosPeriodoAnterior, titulo;
   
   if (tipo === 'dia') {
     // Para vista por día: mostrar horas
     const horas = Array.from({ length: 24 }, (_, i) => i);
     labels = horas.map(h => `${h}:00`);
     datosActuales = horas.map(h => ventasDiarias[h] || 0);
+    datosPeriodoAnterior = horas.map(h => (ventasDiariasAnterior && ventasDiariasAnterior[h]) || 0);
     titulo = "📈 Ventas por Hora del Día";
   } else if (tipo === 'mes') {
     // Para vista por mes: mostrar días
-    const dias = Object.keys(ventasDiarias).sort((a, b) => parseInt(a) - parseInt(b));
-    labels = Array.from({ length: 31 }, (_, i) => `Día ${i + 1}`);
-    datosActuales = Array.from({ length: 31 }, (_, i) => ventasDiarias[i + 1] || 0);
+    const dias = Array.from({ length: 31 }, (_, i) => i + 1);
+    labels = dias.map(d => `Día ${d}`);
+    datosActuales = dias.map(d => ventasDiarias[d] || 0);
+    datosPeriodoAnterior = dias.map(d => (ventasDiariasAnterior && ventasDiariasAnterior[d]) || 0);
     titulo = "📈 Ventas por Día del Mes";
   } else if (tipo === 'año') {
     // Para vista por año: mostrar meses
     const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
     labels = meses;
     datosActuales = Array.from({ length: 12 }, (_, i) => ventasDiarias[i + 1] || 0);
+    datosPeriodoAnterior = Array.from({ length: 12 }, (_, i) => (ventasDiariasAnterior && ventasDiariasAnterior[i + 1]) || 0);
     titulo = "📈 Ventas por Mes del Año";
   }
 
@@ -78,13 +81,6 @@ export function VentasPorDiaChart({ ventasDiarias, tipo }) {
       return suma / periodo;
     });
   };
-
-  // Simular período anterior (70-90% del actual con variación)
-  const datosPeriodoAnterior = datosActuales.map((valor, index) => {
-    const variacion = 0.7 + Math.random() * 0.2; // Entre 70% y 90%
-    const ruido = Math.sin(index) * valor * 0.1; // Añadir algo de variación
-    return Math.max(0, valor * variacion + ruido);
-  });
 
   const mediaMovil = calcularMediaMovil(datosActuales);
 
@@ -115,7 +111,7 @@ export function VentasPorDiaChart({ ventasDiarias, tipo }) {
         pointHoverRadius: 4,
       },
       {
-        label: "Período Anterior",
+        label: tipo === 'dia' ? "Día Anterior" : tipo === 'mes' ? "Mes Anterior" : "Año Anterior",
         data: datosPeriodoAnterior,
         borderColor: "rgb(158, 158, 158)",
         backgroundColor: "transparent",

@@ -216,7 +216,7 @@ export default function Dashboard() {
           </BlockStack>
         </Card>
         
-        {/* Métricas principales - Primera fila */}
+       {/* Métricas principales - Primera fila */}
 <InlineGrid 
   columns={{
     xs: 1,
@@ -230,74 +230,134 @@ export default function Dashboard() {
     md: "400"
   }}
 >
-          <Card>
-            <BlockStack gap="200">
-              <Text as="h3" variant="headingMd" tone="subdued">
-                💰 Total Ventas
-              </Text>
-              <Text as="p" variant="heading2xl" tone="success">
-                Q {data.totalVentas.toFixed(2)}
-              </Text>
-            </BlockStack>
-          </Card>
+  <Card>
+    <BlockStack gap="200">
+      <InlineStack align="space-between">
+        <Text as="h3" variant="headingMd" tone="subdued">
+          💰 Total Ventas
+        </Text>
+        {data.comparacion && (
+          <Badge tone={data.comparacion.totalVentas.cambio >= 0 ? "success" : "critical"}>
+            {data.comparacion.totalVentas.cambio >= 0 ? "↑" : "↓"} {Math.abs(data.comparacion.totalVentas.cambio).toFixed(1)}%
+          </Badge>
+        )}
+      </InlineStack>
+      <Text as="p" variant="heading2xl" tone="success">
+        Q {data.totalVentas.toFixed(2)}
+      </Text>
+      {data.comparacion && (
+        <Text as="p" variant="bodySm" tone="subdued">
+          vs Q {data.comparacion.totalVentas.anterior.toFixed(2)}
+        </Text>
+      )}
+    </BlockStack>
+  </Card>
 
-          <Card>
-            <BlockStack gap="200">
-              <Text as="h3" variant="headingMd" tone="subdued">
-                📋 Total IVA (12%)
-              </Text>
-              <Text as="p" variant="heading2xl">
-                Q {data.totalIVA.toFixed(2)}
-              </Text>
-            </BlockStack>
-          </Card>
+  <Card>
+    <BlockStack gap="200">
+      <InlineStack align="space-between">
+        <Text as="h3" variant="headingMd" tone="subdued">
+          📋 Total IVA (12%)
+        </Text>
+        {data.comparacion && (
+          <Badge tone={data.comparacion.totalIVA.cambio >= 0 ? "success" : "critical"}>
+            {data.comparacion.totalIVA.cambio >= 0 ? "↑" : "↓"} {Math.abs(data.comparacion.totalIVA.cambio).toFixed(1)}%
+          </Badge>
+        )}
+      </InlineStack>
+      <Text as="p" variant="heading2xl">
+        Q {data.totalIVA.toFixed(2)}
+      </Text>
+      {data.comparacion && (
+        <Text as="p" variant="bodySm" tone="subdued">
+          vs Q {data.comparacion.totalIVA.anterior.toFixed(2)}
+        </Text>
+      )}
+    </BlockStack>
+  </Card>
 
-          <Card>
-            <BlockStack gap="200">
-              <Text as="h3" variant="headingMd" tone="subdued">
-                💵 Ventas Netas
-              </Text>
-              <Text as="p" variant="heading2xl">
-                Q {data.ventasNetas.toFixed(2)}
-              </Text>
-            </BlockStack>
-          </Card>
+  <Card>
+    <BlockStack gap="200">
+      <InlineStack align="space-between">
+        <Text as="h3" variant="headingMd" tone="subdued">
+          💵 Ventas Netas
+        </Text>
+        {data.comparacion && (
+          <Badge tone={data.comparacion.ventasNetas.cambio >= 0 ? "success" : "critical"}>
+            {data.comparacion.ventasNetas.cambio >= 0 ? "↑" : "↓"} {Math.abs(data.comparacion.ventasNetas.cambio).toFixed(1)}%
+          </Badge>
+        )}
+      </InlineStack>
+      <Text as="p" variant="heading2xl">
+        Q {data.ventasNetas.toFixed(2)}
+      </Text>
+      {data.comparacion && (
+        <Text as="p" variant="bodySm" tone="subdued">
+          vs Q {data.comparacion.ventasNetas.anterior.toFixed(2)}
+        </Text>
+      )}
+    </BlockStack>
+  </Card>
 
-          <Card>
-            <BlockStack gap="200">
-              <Text as="h3" variant="headingMd" tone="subdued">
-                📦 Total Pedidos
-              </Text>
-              <Text as="p" variant="heading2xl" tone="info">
-                {data.totalPedidos}
-              </Text>
-            </BlockStack>
-          </Card>
+  <Card>
+    <BlockStack gap="200">
+      <InlineStack align="space-between">
+        <Text as="h3" variant="headingMd" tone="subdued">
+          📦 Total Pedidos
+        </Text>
+        {data.comparacion && (
+          <Badge tone={data.comparacion.totalPedidos.cambio >= 0 ? "success" : "critical"}>
+            {data.comparacion.totalPedidos.cambio >= 0 ? "↑" : "↓"} {Math.abs(data.comparacion.totalPedidos.cambio).toFixed(1)}%
+          </Badge>
+        )}
+      </InlineStack>
+      <Text as="p" variant="heading2xl" tone="info">
+        {data.totalPedidos}
+      </Text>
+      {data.comparacion && (
+        <Text as="p" variant="bodySm" tone="subdued">
+          vs {data.comparacion.totalPedidos.anterior}
+        </Text>
+      )}
+    </BlockStack>
+  </Card>
 
-          <Card>
-            <BlockStack gap="200">
-              <Text as="h3" variant="headingMd" tone="subdued">
-                📊 Promedio/Pedido
-              </Text>
-              <Text as="p" variant="heading2xl">
-                Q {data.promedioPorPedido.toFixed(2)}
-              </Text>
-            </BlockStack>
-          </Card>
+  <Card>
+    <BlockStack gap="200">
+      <InlineStack align="space-between">
+        <Text as="h3" variant="headingMd" tone="subdued">
+          📊 Promedio/Pedido
+        </Text>
+        {data.comparacion && (
+          <Badge tone={data.comparacion.promedioPorPedido.cambio >= 0 ? "success" : "critical"}>
+            {data.comparacion.promedioPorPedido.cambio >= 0 ? "↑" : "↓"} {Math.abs(data.comparacion.promedioPorPedido.cambio).toFixed(1)}%
+          </Badge>
+        )}
+      </InlineStack>
+      <Text as="p" variant="heading2xl">
+        Q {data.promedioPorPedido.toFixed(2)}
+      </Text>
+      {data.comparacion && (
+        <Text as="p" variant="bodySm" tone="subdued">
+          vs Q {data.comparacion.promedioPorPedido.anterior.toFixed(2)}
+        </Text>
+      )}
+    </BlockStack>
+  </Card>
 
-          <Card>
-            <BlockStack gap="200">
-              <Text as="h3" variant="headingMd" tone="subdued">
-                📅 Días con Ventas
-              </Text>
-              <Text as="p" variant="heading2xl">
-                {data.diasConVentas}
-              </Text>
-            </BlockStack>
-          </Card>
-        </InlineGrid>
+  <Card>
+    <BlockStack gap="200">
+      <Text as="h3" variant="headingMd" tone="subdued">
+        📅 Días con Ventas
+      </Text>
+      <Text as="p" variant="heading2xl">
+        {data.diasConVentas}
+      </Text>
+    </BlockStack>
+  </Card>
+</InlineGrid>
 
-        {/* Segunda fila de métricas */}
+{/* Segunda fila de métricas */}
 <InlineGrid 
   columns={{
     xs: 1,
@@ -310,44 +370,60 @@ export default function Dashboard() {
     md: "400"
   }}
 >
-          <Card>
-            <BlockStack gap="200">
-              <Text as="h3" variant="headingMd" tone="subdued">
-                📈 Promedio Diario
-              </Text>
-              <Text as="p" variant="headingXl">
-                Q {data.promedioDiario.toFixed(2)}
-              </Text>
-            </BlockStack>
-          </Card>
+  <Card>
+    <BlockStack gap="200">
+      <InlineStack align="space-between">
+        <Text as="h3" variant="headingMd" tone="subdued">
+          📈 Promedio Diario
+        </Text>
+        {data.comparacion && (
+          <Badge tone={data.comparacion.promedioDiario.cambio >= 0 ? "success" : "critical"}>
+            {data.comparacion.promedioDiario.cambio >= 0 ? "↑" : "↓"} {Math.abs(data.comparacion.promedioDiario.cambio).toFixed(1)}%
+          </Badge>
+        )}
+      </InlineStack>
+      <Text as="p" variant="headingXl">
+        Q {data.promedioDiario.toFixed(2)}
+      </Text>
+      {data.comparacion && (
+        <Text as="p" variant="bodySm" tone="subdued">
+          vs Q {data.comparacion.promedioDiario.anterior.toFixed(2)}
+        </Text>
+      )}
+    </BlockStack>
+  </Card>
 
-          <Card>
-            <BlockStack gap="200">
-              <Text as="h3" variant="headingMd" tone="subdued">
-                💹 Venta Máxima
-              </Text>
-              <Text as="p" variant="headingXl" tone="success">
-                Q {data.ventaMaxima.toFixed(2)}
-              </Text>
-            </BlockStack>
-          </Card>
+  <Card>
+    <BlockStack gap="200">
+      <Text as="h3" variant="headingMd" tone="subdued">
+        💹 Venta Máxima
+      </Text>
+      <Text as="p" variant="headingXl" tone="success">
+        Q {data.ventaMaxima.toFixed(2)}
+      </Text>
+    </BlockStack>
+  </Card>
 
-          <Card>
-            <BlockStack gap="200">
-              <Text as="h3" variant="headingMd" tone="subdued">
-                📉 Venta Mínima
-              </Text>
-              <Text as="p" variant="headingXl" tone="critical">
-                Q {data.ventaMinima.toFixed(2)}
-              </Text>
-            </BlockStack>
-          </Card>
-        </InlineGrid>
+  <Card>
+    <BlockStack gap="200">
+      <Text as="h3" variant="headingMd" tone="subdued">
+        📉 Venta Mínima
+      </Text>
+      <Text as="p" variant="headingXl" tone="critical">
+        Q {data.ventaMinima.toFixed(2)}
+      </Text>
+    </BlockStack>
+  </Card>
+</InlineGrid> 
 
         {/* Gráfica principal de ventas */}
 {data.ventasDiarias && Object.keys(data.ventasDiarias).length > 0 && (
   <div style={{ marginBottom: "20px" }}>
-    <VentasPorDiaChart ventasDiarias={data.ventasDiarias} tipo={data.tipoVisualizacion} />
+    <VentasPorDiaChart 
+      ventasDiarias={data.ventasDiarias} 
+      ventasDiariasAnterior={data.ventasDiariasAnterior}
+      tipo={data.tipoVisualizacion} 
+    />
   </div>
 )}
 
