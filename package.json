@@ -24,6 +24,9 @@
   },
   "dependencies": {
     "@prisma/client": "^6.2.1",
+    "html-pdf": "^3.0.1",
+    "phantomjs-prebuilt": "^2.1.16",
+    "form-data": "^4.0.0",
     "@remix-run/dev": "^2.16.1",
     "@remix-run/express": "^2.16.8",
     "@remix-run/fs-routes": "^2.16.1",

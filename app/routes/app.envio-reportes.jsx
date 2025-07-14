@@ -23,6 +23,9 @@ import { authenticate } from "../shopify.server";
 import { generateHTMLReport, generateWhatsAppMessage } from "../utils/generateReports.server";
 import { sendEmailReport } from "../utils/emailService.server";
 import { sendWhatsAppMessage, validateWhatsAppNumber } from "../utils/whatsappService.server";
+import { generatePDFBuffer } from "../utils/pdfGenerator.server";
+import fs from 'fs/promises';
+import path from 'path';
 
 export async function loader({ request }) {
   await authenticate.admin(request);
@@ -141,12 +144,22 @@ export async function action({ request }) {
         mes,
         anio
       );
-      
+      // Generar PDF y guardar en public/reports
+      const pdfBuffer = await generatePDFBuffer(reportData.html);
+      const pdfName = `reporte-${tipo}-${anio}${mes}${dia||''}.pdf`;
+      const reportsDir = path.join(process.cwd(), 'public', 'reports');
+      await fs.mkdir(reportsDir, { recursive: true });
+      const pdfPath = path.join(reportsDir, pdfName);
+      await fs.writeFile(pdfPath, pdfBuffer);
+      // Construir URL público al PDF
+      const mediaUrl = new URL(`/reports/${pdfName}`, request.url).toString();
+       
       // Enviar mensaje
       console.log("Enviando WhatsApp a:", validation.cleaned);
       const whatsappResult = await sendWhatsAppMessage({
         to: validation.cleaned,
-        message: whatsappMessage
+        message: whatsappMessage,
+        mediaUrl: mediaUrl
       });
       
       if (!whatsappResult.success) {

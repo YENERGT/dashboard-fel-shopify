@@ -1,10 +1,12 @@
 // Servicio para enviar mensajes por WhatsApp Business API
 // Puedes usar servicios como Twilio, WhatsApp Business API, o MessageBird
 
+import FormData from 'form-data';
 import fetch from 'node-fetch';
 
+// Media upload then document send for WhatsApp Business API
 export async function sendWhatsAppMessage(options) {
-  const { to, message, mediaUrl } = options;
+  const { to, message, mediaUrl, documentBuffer, documentName } = options;
   
   // Opción 1: Usar Twilio (necesitas cuenta de Twilio)
   if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
@@ -13,7 +15,7 @@ export async function sendWhatsAppMessage(options) {
   
   // Opción 2: Usar WhatsApp Business API directamente
   if (process.env.WHATSAPP_API_TOKEN) {
-    return sendViaWhatsAppAPI(to, message, mediaUrl);
+    return sendViaWhatsAppAPI(to, message, mediaUrl, documentBuffer, documentName);
   }
   
   // Opción 3: Usar un webhook o servicio personalizado
@@ -54,23 +56,39 @@ async function sendViaTwilio(to, message, mediaUrl) {
 }
 
 // Implementación con WhatsApp Business API
-async function sendViaWhatsAppAPI(to, message, mediaUrl) {
+async function sendViaWhatsAppAPI(to, message, mediaUrl, documentBuffer, documentName) {
   try {
     const apiUrl = process.env.WHATSAPP_API_URL || 'https://graph.facebook.com/v17.0';
     const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
     const token = process.env.WHATSAPP_API_TOKEN;
-    
-    const cleanNumber = to.replace(/[^\d]/g, '');
-    
-    // Reemplazar definición de payload para manejar texto o imagen según mediaUrl
-    const payload = {
-      messaging_product: "whatsapp",
-      to: cleanNumber,
-      type: mediaUrl ? "image" : "text",
-      ...(mediaUrl
-        ? { image: { link: mediaUrl } }
-        : { text: { body: message } })
-    };
+        const cleanNumber = to.replace(/[^\d]/g, '');
+    let mediaId;
+    // If documentBuffer provided, upload first
+    if (documentBuffer) {
+      const form = new FormData();
+      form.append('file', documentBuffer, { filename: documentName, contentType: 'application/pdf' });
+      form.append('type', 'document');
+      const uploadRes = await fetch(`${apiUrl}/${phoneNumberId}/media`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: form
+      });
+      const uploadResult = await uploadRes.json();
+      if (!uploadRes.ok) throw new Error(uploadResult.error?.message || 'Error uploading media');
+      mediaId = uploadResult.id;
+    }
+    // Build payload
+    let payload = { messaging_product: 'whatsapp', to: cleanNumber };
+    if (documentBuffer) {
+      payload.type = 'document';
+      payload.document = { id: mediaId, filename: documentName };
+    } else if (mediaUrl) {
+      payload.type = 'image';
+      payload.image = { link: mediaUrl };
+    } else {
+      payload.type = 'text';
+      payload.text = { body: message };
+    }
     
     const response = await fetch(`${apiUrl}/${phoneNumberId}/messages`, {
       method: 'POST',

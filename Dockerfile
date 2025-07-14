@@ -1,9 +1,15 @@
-FROM node:18-alpine
-
+FROM node:18-slim
+ 
 WORKDIR /app
 
-# Instalar OpenSSL para Prisma
-RUN apk add --no-cache openssl
+# Instalar dependencias del sistema para PhantomJS y Prisma
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+      openssl \
+      libfontconfig1 \
+      libfreetype6 \
+      bzip2 && \
+    rm -rf /var/lib/apt/lists/*
 
 # Copiar archivos de configuración
 COPY package*.json ./
@@ -11,7 +17,7 @@ COPY remix.config.js ./
 COPY prisma ./prisma/
 
 # Instalar dependencias
-RUN npm ci --production=false
+RUN npm install --legacy-peer-deps
 
 # Copiar el resto de la aplicación
 COPY . .
