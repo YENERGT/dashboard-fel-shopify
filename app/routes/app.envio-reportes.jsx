@@ -123,66 +123,60 @@ export async function action({ request }) {
         method: 'email',
         details: emailResult
       });
-      
-    } else if (metodoEnvio === 'whatsapp') {
-      // Validar número de WhatsApp
-      const validation = validateWhatsAppNumber(numeroWhatsapp);
-      if (!validation.isValid) {
-        return json({
-          success: false,
-          error: validation.error
-        }, { status: 400 });
       }
       
-      // Generar PDF del reporte
-      const pdfBuffer = await generatePDFBuffer(reportData.html);
-      const pdfName = `reporte-${tipo}-${anio}${mes}${dia || ''}.pdf`;
-      
-      // Generar mensaje de texto para WhatsApp
-      const whatsappMessage = generateWhatsAppMessage(reportData, tipo, dia, mes, anio);
-      
-      // Enviar PDF por WhatsApp
-      console.log("Enviando WhatsApp PDF a:", validation.cleaned);
-      const whatsappResult = await sendWhatsAppMessage({
-        to: validation.cleaned,
-        message: whatsappMessage,
-        documentBuffer: pdfBuffer,
-        documentName: pdfName
-      });
-      
-      if (!whatsappResult.success) {
-        return json({
-          success: false,
-          error: whatsappResult.error || 'Error al enviar WhatsApp'
-        }, { status: 500 });
-      }
-      
-      // Si requiere envío manual (WhatsApp Web)
-      if (whatsappResult.requiresManualSend) {
-        return json({
-          success: true,
-          message: "Enlace de WhatsApp generado. Haga clic para enviar el mensaje.",
-          method: 'whatsapp',
-          whatsappUrl: whatsappResult.whatsappUrl,
-          requiresManualSend: true
-        });
-      }
-      
-      return json({
-        success: true,
-        message: `Reporte enviado exitosamente a ${numeroWhatsapp}`,
-        method: 'whatsapp',
-        details: whatsappResult
-      });
-    }
-    
-  } catch (error) {
-    console.error("Error en action:", error);
+    // Dentro de la función action, en la parte de WhatsApp
+if (metodoEnvio === 'whatsapp') {
+  // Validar número de WhatsApp
+  const validation = validateWhatsAppNumber(numeroWhatsapp);
+  if (!validation.isValid) {
     return json({
       success: false,
-      error: error.message || "Error al procesar el envío"
+      error: validation.error
+    }, { status: 400 });
+  }
+      
+      // Generar PDF del reporte
+  console.log("Generando PDF del reporte...");
+  const pdfBuffer = await generatePDFBuffer(reportData.html);
+  const pdfName = `reporte-${tipo}-${anio}${mes}${dia || ''}.pdf`;
+      
+      // Generar mensaje de texto para WhatsApp
+  const whatsappMessage = generateWhatsAppMessage(reportData, tipo, dia, mes, anio);
+      
+      // Enviar PDF por WhatsApp
+  console.log("Enviando WhatsApp con PDF a:", validation.cleaned);
+  const whatsappResult = await sendWhatsAppMessage({
+    to: validation.cleaned,
+    message: whatsappMessage,
+    documentBuffer: pdfBuffer,
+    documentName: pdfName
+  });
+  
+  if (!whatsappResult.success) {
+    console.error("Error al enviar WhatsApp:", whatsappResult.error);
+    return json({
+      success: false,
+      error: whatsappResult.error || 'Error al enviar WhatsApp'
     }, { status: 500 });
   }
+      
+      return json({
+    success: true,
+    message: `Reporte enviado exitosamente a ${numeroWhatsapp}`,
+    method: 'whatsapp',
+    details: whatsappResult
+  });
+}
+
+} catch (error) {
+  console.error("Error inesperado:", error);
+  return json({
+    success: false,
+    error: "Ocurrió un error inesperado al procesar el reporte."
+  }, { status: 500 });
+}
+
 }
 
 export default function EnvioReportes() {
@@ -483,3 +477,4 @@ export default function EnvioReportes() {
     </Page>
   );
 }
+
