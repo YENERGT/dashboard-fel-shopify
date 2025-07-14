@@ -1,5 +1,5 @@
 import { json } from "@remix-run/node";
-import { useLoaderData, useSubmit, useNavigation } from "@remix-run/react";
+import { useLoaderData, useSubmit, useNavigation, useActionData } from "@remix-run/react";
 import {
   Page,
   Layout,
@@ -18,8 +18,11 @@ import {
   Banner,
   Spinner,
 } from "@shopify/polaris";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { authenticate } from "../shopify.server";
+import { generateHTMLReport, generateWhatsAppMessage } from "../utils/generateReports.server";
+import { sendEmailReport } from "../utils/emailService.server";
+import { sendWhatsAppMessage, validateWhatsAppNumber } from "../utils/whatsappService.server";
 
 export async function loader({ request }) {
   await authenticate.admin(request);
@@ -36,18 +39,148 @@ export async function action({ request }) {
   const data = Object.fromEntries(formData);
   
   try {
-    // Aquí procesaremos el envío
-    console.log("Datos recibidos:", data);
+    // Validar datos
+    const {
+      metodoEnvio,
+      reportesFEL,
+      reportesFinanciero,
+      tipo,
+      dia,
+      mes,
+      anio,
+      emailDestino,
+      numeroWhatsapp,
+      incluirComparacion
+    } = data;
     
-    return json({
-      success: true,
-      message: "Reporte enviado exitosamente"
+    // Convertir strings a booleanos
+    const includeFEL = reportesFEL === 'true';
+    const includeFinanciero = reportesFinanciero === 'true';
+    const includeComparison = incluirComparacion === 'true';
+    
+    // Validar que al menos un reporte esté seleccionado
+    if (!includeFEL && !includeFinanciero) {
+      return json({
+        success: false,
+        error: "Debe seleccionar al menos un tipo de reporte"
+      }, { status: 400 });
+    }
+    
+    // Generar el reporte HTML
+    console.log("Generando reporte...");
+    const reportData = await generateHTMLReport({
+      tipo,
+      dia,
+      mes,
+      anio,
+      reportesFEL: includeFEL,
+      reportesFinanciero: includeFinanciero,
+      incluirComparacion: includeComparison
     });
+    
+    // Enviar según el método seleccionado
+    if (metodoEnvio === 'email') {
+      // Validar email
+      if (!emailDestino || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailDestino)) {
+        return json({
+          success: false,
+          error: "Email inválido"
+        }, { status: 400 });
+      }
+      
+      // Preparar el asunto del email
+      const periodo = tipo === 'dia' ? `Día ${dia}/${mes}/${anio}` : 
+                     tipo === 'mes' ? `Mes ${mes}/${anio}` : 
+                     `Año ${anio}`;
+      
+      const tiposReporte = [];
+      if (includeFEL) tiposReporte.push('Dashboard FEL');
+      if (includeFinanciero) tiposReporte.push('Análisis Financiero');
+      
+      const subject = `Reporte ${tiposReporte.join(' y ')} - ${periodo}`;
+      const attachmentName = `reporte-${tipo}-${anio}${mes}${dia || ''}.html`;
+      
+      // Enviar email
+      console.log("Enviando email a:", emailDestino);
+      const emailResult = await sendEmailReport({
+        to: emailDestino,
+        subject: subject,
+        htmlContent: reportData.html,
+        attachmentName: attachmentName
+      });
+      
+      if (!emailResult.success) {
+        return json({
+          success: false,
+          error: emailResult.error || 'Error al enviar email'
+        }, { status: 500 });
+      }
+      
+      return json({
+        success: true,
+        message: `Reporte enviado exitosamente a ${emailDestino}`,
+        method: 'email',
+        details: emailResult
+      });
+      
+    } else if (metodoEnvio === 'whatsapp') {
+      // Validar número de WhatsApp
+      const validation = validateWhatsAppNumber(numeroWhatsapp);
+      if (!validation.isValid) {
+        return json({
+          success: false,
+          error: validation.error
+        }, { status: 400 });
+      }
+      
+      // Generar mensaje de WhatsApp
+      const whatsappMessage = generateWhatsAppMessage(
+        reportData,
+        tipo,
+        dia,
+        mes,
+        anio
+      );
+      
+      // Enviar mensaje
+      console.log("Enviando WhatsApp a:", validation.cleaned);
+      const whatsappResult = await sendWhatsAppMessage({
+        to: validation.cleaned,
+        message: whatsappMessage
+      });
+      
+      if (!whatsappResult.success) {
+        return json({
+          success: false,
+          error: whatsappResult.error || 'Error al enviar WhatsApp'
+        }, { status: 500 });
+      }
+      
+      // Si requiere envío manual (WhatsApp Web)
+      if (whatsappResult.requiresManualSend) {
+        return json({
+          success: true,
+          message: "Enlace de WhatsApp generado. Haga clic para enviar el mensaje.",
+          method: 'whatsapp',
+          whatsappUrl: whatsappResult.whatsappUrl,
+          requiresManualSend: true
+        });
+      }
+      
+      return json({
+        success: true,
+        message: `Reporte enviado exitosamente a ${numeroWhatsapp}`,
+        method: 'whatsapp',
+        details: whatsappResult
+      });
+    }
+    
   } catch (error) {
+    console.error("Error en action:", error);
     return json({
       success: false,
-      error: error.message
-    }, { status: 400 });
+      error: error.message || "Error al procesar el envío"
+    }, { status: 500 });
   }
 }
 
@@ -55,8 +188,24 @@ export default function EnvioReportes() {
   const loaderData = useLoaderData();
   const submit = useSubmit();
   const navigation = useNavigation();
+  const actionData = useActionData();
   const isSubmitting = navigation.state === "submitting";
   
+  // Mostrar resultado de la action
+  useEffect(() => {
+    if (actionData) {
+      if (actionData.success) {
+        setMensaje({ tipo: 'success', texto: actionData.message });
+        if (actionData.method === 'whatsapp' && actionData.requiresManualSend) {
+          setTimeout(() => window.open(actionData.whatsappUrl, '_blank'), 1000);
+        }
+        if (metodoEnvio === 'email') setEmailDestino(''); else setNumeroWhatsapp('');
+      } else {
+        setMensaje({ tipo: 'critical', texto: actionData.error });
+      }
+    }
+  }, [actionData]);
+
   // Estados para el formulario
   const [metodoEnvio, setMetodoEnvio] = useState("email");
   const [reportesFEL, setReportesFEL] = useState(true);
@@ -71,7 +220,7 @@ export default function EnvioReportes() {
   const [mensaje, setMensaje] = useState(null);
 
   const handleSubmit = useCallback(() => {
-    // Validaciones
+    // Validaciones existentes...
     if (!reportesFEL && !reportesFinanciero) {
       setMensaje({ tipo: "warning", texto: "Debe seleccionar al menos un tipo de reporte" });
       return;
@@ -87,13 +236,11 @@ export default function EnvioReportes() {
       return;
     }
     
-    // Validar formato de email
     if (metodoEnvio === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailDestino)) {
       setMensaje({ tipo: "critical", texto: "El email ingresado no es válido" });
       return;
     }
     
-    // Validar formato de WhatsApp (código de país + número)
     if (metodoEnvio === "whatsapp" && !/^\+\d{10,15}$/.test(numeroWhatsapp)) {
       setMensaje({ tipo: "critical", texto: "El número debe incluir código de país (ej: +50212345678)" });
       return;
@@ -111,8 +258,8 @@ export default function EnvioReportes() {
     formData.append("numeroWhatsapp", numeroWhatsapp);
     formData.append("incluirComparacion", incluirComparacion);
     
-    submit(formData, { method: "post" });
     setMensaje({ tipo: "info", texto: "Procesando envío..." });
+    submit(formData, { method: 'post' });
   }, [metodoEnvio, reportesFEL, reportesFinanciero, tipo, dia, mes, anio, emailDestino, numeroWhatsapp, incluirComparacion, submit]);
 
   const tipoOptions = [
