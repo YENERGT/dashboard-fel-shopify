@@ -6,7 +6,11 @@ import fetch from 'node-fetch';
 
 // Media upload then document send for WhatsApp Business API
 export async function sendWhatsAppMessage(options) {
-  const { to, message, mediaUrl, documentBuffer, documentName } = options;
+  const { to, message, mediaUrl, documentBuffer, documentName, templateName, templateLanguage, templateVariables } = options;
+  // If a templateName is provided, send a template message
+  if (templateName) {
+    return sendViaWhatsAppTemplate(to, templateName, templateLanguage || 'en_US', templateVariables || []);
+  }
   
   // Opción 1: Usar Twilio (necesitas cuenta de Twilio)
   if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
@@ -66,11 +70,16 @@ async function sendViaWhatsAppAPI(to, message, mediaUrl, documentBuffer, documen
     // If documentBuffer provided, upload first
     if (documentBuffer) {
       const form = new FormData();
+      // Specify messaging product for WhatsApp API
+      form.append('messaging_product', 'whatsapp');
       form.append('file', documentBuffer, { filename: documentName, contentType: 'application/pdf' });
-      form.append('type', 'document');
-      const uploadRes = await fetch(`${apiUrl}/${phoneNumberId}/media`, {
+      // Upload document with proper multipart headers and query parameter
+      const uploadRes = await fetch(`${apiUrl}/${phoneNumberId}/media?type=document&messaging_product=whatsapp`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` },
+        headers: {
+          ...form.getHeaders(),
+          'Authorization': `Bearer ${token}`
+        },
         body: form
       });
       const uploadResult = await uploadRes.json();
@@ -117,6 +126,47 @@ async function sendViaWhatsAppAPI(to, message, mediaUrl, documentBuffer, documen
       error: error.message
     };
   }
+}
+
+// Nueva implementación para enviar plantillas de WhatsApp
+async function sendViaWhatsAppTemplate(to, templateName, templateLanguage, templateVariables = []) {
+  const apiUrl = process.env.WHATSAPP_API_URL || 'https://graph.facebook.com/v17.0';
+  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+  const token = process.env.WHATSAPP_API_TOKEN;
+  const cleanNumber = to.replace(/[^\d]/g, '');
+
+  const payload = {
+    messaging_product: 'whatsapp',
+    to: cleanNumber,
+    type: 'template',
+    template: {
+      name: templateName,
+      language: { code: templateLanguage },
+      components: [
+        {
+          type: 'body',
+          parameters: templateVariables.map(text => ({ type: 'text', text }))
+        }
+      ]
+    }
+  };
+
+  const response = await fetch(`${apiUrl}/${phoneNumberId}/messages`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(payload)
+  });
+  const result = await response.json();
+  if (!response.ok) throw new Error(result.error?.message || 'Error al enviar plantilla');
+
+  return {
+    success: true,
+    messageId: result.messages?.[0]?.id,
+    status: 'sent'
+  };
 }
 
 // Implementación con webhook personalizado
