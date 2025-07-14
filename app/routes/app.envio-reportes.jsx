@@ -22,7 +22,7 @@ import { useState, useCallback, useEffect } from "react";
 import { authenticate } from "../shopify.server";
 import { generateHTMLReport } from "../utils/generateReports.server";
 import { sendEmailReport } from "../utils/emailService.server";
-import { sendWhatsAppMessage, validateWhatsAppNumber } from "../utils/whatsappService.server";
+import { sendWhatsAppMessage, validateWhatsAppNumber, generateWhatsAppMessage } from "../utils/whatsappService.server";
 import { generatePDFBuffer } from "../utils/pdfGenerator.server";
 
 export async function loader({ request }) {
@@ -138,10 +138,14 @@ export async function action({ request }) {
       const pdfBuffer = await generatePDFBuffer(reportData.html);
       const pdfName = `reporte-${tipo}-${anio}${mes}${dia || ''}.pdf`;
       
+      // Generar mensaje de texto para WhatsApp
+      const whatsappMessage = generateWhatsAppMessage(reportData, tipo, dia, mes, anio);
+      
       // Enviar PDF por WhatsApp
       console.log("Enviando WhatsApp PDF a:", validation.cleaned);
       const whatsappResult = await sendWhatsAppMessage({
         to: validation.cleaned,
+        message: whatsappMessage,
         documentBuffer: pdfBuffer,
         documentName: pdfName
       });

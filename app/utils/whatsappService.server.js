@@ -74,7 +74,7 @@ async function sendViaWhatsAppAPI(to, message, mediaUrl, documentBuffer, documen
       form.append('messaging_product', 'whatsapp');
       form.append('file', documentBuffer, { filename: documentName, contentType: 'application/pdf' });
       // Upload document with proper multipart headers and query parameter
-      const uploadRes = await fetch(`${apiUrl}/${phoneNumberId}/media?type=document&messaging_product=whatsapp`, {
+      const uploadRes = await fetch(`${apiUrl}/${phoneNumberId}/media`, {
         method: 'POST',
         headers: {
           ...form.getHeaders(),
@@ -90,7 +90,8 @@ async function sendViaWhatsAppAPI(to, message, mediaUrl, documentBuffer, documen
     let payload = { messaging_product: 'whatsapp', to: cleanNumber };
     if (documentBuffer) {
       payload.type = 'document';
-      payload.document = { id: mediaId, filename: documentName };
+      // incluir caption con el mensaje de texto
+      payload.document = { id: mediaId, filename: documentName, caption: message };
     } else if (mediaUrl) {
       payload.type = 'image';
       payload.image = { link: mediaUrl };
@@ -110,7 +111,12 @@ async function sendViaWhatsAppAPI(to, message, mediaUrl, documentBuffer, documen
     
     const result = await response.json();
     
+    // Log para depuración: Muestra la respuesta completa de la API de WhatsApp
+    console.log('Respuesta de la API de WhatsApp:', JSON.stringify(result, null, 2));
+    
     if (!response.ok) {
+      // Log detallado del error
+      console.error('Error en la respuesta de la API de WhatsApp:', result.error);
       throw new Error(result.error?.message || 'Error al enviar mensaje');
     }
     
@@ -240,4 +246,24 @@ export function formatMessageForWhatsApp(text) {
   return text
     .replace(/\n\n/g, '\n \n') // Doble salto de línea
     .substring(0, 4096); // Límite de caracteres de WhatsApp
+}
+
+export function generateWhatsAppMessage(reportData, tipo, dia, mes, anio) {
+  if (!reportData || !reportData.data) return "Adjunto encontrarás tu reporte.";
+
+  const { totalVentas, totalPedidos, promedioPorPedido } = reportData.data;
+  const periodo =
+    tipo === "dia"
+      ? `el día ${dia}/${mes}/${anio}`
+      : tipo === "mes"
+      ? `el mes ${mes}/${anio}`
+      : `el año ${anio}`;
+
+  let message = `*Resumen del Reporte para ${periodo}*\n\n`;
+  message += `📈 *Ventas Totales:* ${new Intl.NumberFormat("es-GT", { style: "currency", currency: "GTQ" }).format(totalVentas || 0)}\n`;
+  message += `📦 *Total de Pedidos:* ${totalPedidos || 0}\n`;
+  message += `💰 *Ticket Promedio:* ${new Intl.NumberFormat("es-GT", { style: "currency", currency: "GTQ" }).format(promedioPorPedido || 0)}\n\n`;
+  message += "📄 El PDF adjunto contiene el análisis detallado con gráficas, tablas y comparativas.";
+
+  return formatMessageForWhatsApp(message);
 }
