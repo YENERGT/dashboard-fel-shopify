@@ -1,30 +1,23 @@
+import { parseUniversalDate, validarFechaEnRango } from './dateUtils.server.js';
+
 export function processSheetData(rawData, tipo, dia, mes, anio, incluirComparacion = true) {
   if (!rawData || rawData.length < 2) return null;
+
   
   const headers = rawData[0];
   const data = rawData.slice(1);
   
-  // Filtrar datos según fecha
+// Filtrar datos según fecha - NUEVA IMPLEMENTACIÓN
   const filteredData = data.filter(row => {
     const fechaStr = row[9]; // Columna J: FECHA
     if (!fechaStr) return false;
     
-    const fecha = new Date(fechaStr);
-    if (isNaN(fecha.getTime())) return false;
+    // Usar la nueva función universal de parseo de fechas
+    const fecha = parseUniversalDate(fechaStr);
+    if (!fecha) return false;
     
-    switch (tipo) {
-      case 'dia':
-        return fecha.getDate() === parseInt(dia) &&
-               fecha.getMonth() + 1 === parseInt(mes) &&
-               fecha.getFullYear() === parseInt(anio);
-      case 'mes':
-        return fecha.getMonth() + 1 === parseInt(mes) &&
-               fecha.getFullYear() === parseInt(anio);
-      case 'año':
-        return fecha.getFullYear() === parseInt(anio);
-      default:
-        return true;
-    }
+    // Usar la nueva función de validación de rango
+    return validarFechaEnRango(fecha, tipo, dia, mes, anio);
   });
 
   // Determinar fechas para período anterior
@@ -34,6 +27,8 @@ if (incluirComparacion) {
   const fechaActual = new Date(parseInt(anio), parseInt(mes) - 1, parseInt(dia) || 1);
   
   switch (tipo) {
+    // REEMPLAZAR las 3 secciones del switch con esto:
+
     case 'dia':
       // Día anterior
       const fechaAnterior = new Date(fechaActual);
@@ -42,7 +37,8 @@ if (incluirComparacion) {
       filteredDataAnterior = data.filter(row => {
         const fechaStr = row[9];
         if (!fechaStr) return false;
-        const fecha = new Date(fechaStr);
+        const fecha = parseUniversalDate(fechaStr); // NUEVA FUNCIÓN
+        if (!fecha) return false;
         return fecha.getDate() === fechaAnterior.getDate() &&
                fecha.getMonth() === fechaAnterior.getMonth() &&
                fecha.getFullYear() === fechaAnterior.getFullYear();
@@ -57,7 +53,8 @@ if (incluirComparacion) {
       filteredDataAnterior = data.filter(row => {
         const fechaStr = row[9];
         if (!fechaStr) return false;
-        const fecha = new Date(fechaStr);
+        const fecha = parseUniversalDate(fechaStr); // NUEVA FUNCIÓN
+        if (!fecha) return false;
         return fecha.getMonth() === fechaMesAnterior.getMonth() &&
                fecha.getFullYear() === fechaMesAnterior.getFullYear();
       });
@@ -70,7 +67,8 @@ if (incluirComparacion) {
       filteredDataAnterior = data.filter(row => {
         const fechaStr = row[9];
         if (!fechaStr) return false;
-        const fecha = new Date(fechaStr);
+        const fecha = parseUniversalDate(fechaStr); // NUEVA FUNCIÓN
+        if (!fecha) return false;
         return fecha.getFullYear() === anioAnterior;
       });
       break;
@@ -106,7 +104,7 @@ if (incluirComparacion) {
     totalVentas += venta;
     totalIVA += iva;
     
-    const fecha = new Date(row[9]);
+    const fecha = parseUniversalDate(row[9]);
 const diaNum = fecha.getDate();
 const hora = fecha.getHours();
 const mesNum = fecha.getMonth() + 1;
@@ -223,7 +221,7 @@ if (incluirComparacion && filteredDataAnterior.length > 0) {
     totalIVAAnterior += iva;
     totalPedidosAnterior += 1;
     
-    const fecha = new Date(row[9]);
+    const fecha = parseUniversalDate(row[9]);
     const diaNum = fecha.getDate();
     const hora = fecha.getHours();
     const mesNum = fecha.getMonth() + 1;

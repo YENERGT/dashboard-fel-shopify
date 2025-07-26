@@ -1,6 +1,7 @@
 import { getGoogleSheetsData, getGoogleSheetsPagos } from './googleSheets.server';
 import { processSheetData } from './processData.server';
 import { processPagosData } from './processPagos.server';
+import { parseUniversalDate, formatearFechaEspanol } from './dateUtils.server.js';
 
 export async function generateHTMLReport(options) {
   const { tipo, dia, mes, anio, reportesFEL, reportesFinanciero, incluirComparacion } = options;
@@ -376,7 +377,8 @@ function generateHTMLTemplate(params) {
       <div class="footer">
         <p>
           Este reporte fue generado automáticamente<br>
-          ${new Date().toLocaleString('es-GT', { timeZone: 'America/Guatemala' })}
+          
+${formatearFechaEspanol(new Date())}
         </p>
         <p style="margin-top: 20px; font-size: 12px; color: #868e96;">
           © 2025 Dashboard FEL - Todos los derechos reservados

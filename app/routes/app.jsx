@@ -4,6 +4,8 @@ import { AppProvider } from "@shopify/shopify-app-remix/react";
 import { NavMenu } from "@shopify/app-bridge-react";
 import polarisStyles from "@shopify/polaris/build/esm/styles.css?url";
 import { authenticate } from "../shopify.server";
+import { Header } from "../components/Header";
+import { Box } from "@shopify/polaris";
 
 export const links = () => [{ rel: "stylesheet", href: polarisStyles }];
 
@@ -28,7 +30,12 @@ export default function App() {
         <Link to="/app/settings">Configuración</Link>
         <Link to="/app/additional">Additional page</Link>
       </NavMenu>
-      <Outlet />
+      <Box>
+        <Header />
+        <Box paddingBlockStart="0">
+          <Outlet />
+        </Box>
+      </Box>
     </AppProvider>
   );
 }

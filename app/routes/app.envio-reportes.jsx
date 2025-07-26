@@ -22,7 +22,7 @@ import { useState, useCallback, useEffect } from "react";
 import { authenticate } from "../shopify.server";
 import { generateHTMLReport } from "../utils/generateReports.server";
 import { sendEmailReport } from "../utils/emailService.server";
-import { sendWhatsAppMessage, validateWhatsAppNumber, generateWhatsAppMessage, generateReportSummary } from "../utils/whatsappService.server";
+import { sendWhatsAppMessage, validateWhatsAppNumber, generateWhatsAppMessage } from "../utils/whatsappService.server";
 import { generatePDFBuffer } from "../utils/pdfGenerator.server";
 
 export async function loader({ request }) {
@@ -144,18 +144,13 @@ if (metodoEnvio === 'whatsapp') {
       // Generar mensaje de texto para WhatsApp
   const whatsappMessage = generateWhatsAppMessage(reportData, tipo, dia, mes, anio);
       
-      // Generar resumen para la plantilla
-      const reportSummary = generateReportSummary(reportData, tipo, dia, mes, anio);
-      
       // Enviar PDF por WhatsApp
   console.log("Enviando WhatsApp con PDF a:", validation.cleaned);
   const whatsappResult = await sendWhatsAppMessage({
     to: validation.cleaned,
     message: whatsappMessage,
     documentBuffer: pdfBuffer,
-    documentName: pdfName,
-    reportSummary: reportSummary,
-    useTemplate: true  // usar plantilla
+    documentName: pdfName
   });
   
   if (!whatsappResult.success) {
@@ -482,3 +477,4 @@ export default function EnvioReportes() {
     </Page>
   );
 }
+

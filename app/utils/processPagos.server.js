@@ -1,4 +1,5 @@
 import { processSheetData } from './processData.server.js';
+import { parseUniversalDate, validarFechaEnRango } from './dateUtils.server.js';
 
 export function processPagosData(rawDataPagos, rawDataVentas, tipo, dia, mes, anio) {
   if (!rawDataPagos || rawDataPagos.length < 2) return null;
@@ -10,27 +11,17 @@ export function processPagosData(rawDataPagos, rawDataVentas, tipo, dia, mes, an
   const ventasData = processSheetData(rawDataVentas, tipo, dia, mes, anio, false);
   const totalIngresos = ventasData.totalVentas;
   
-  // Filtrar pagos según fecha
+  // Filtrar pagos según fecha - NUEVA IMPLEMENTACIÓN
   const filteredPagos = dataPagos.filter(row => {
     const fechaStr = row[1]; // Columna B: FECHA
     if (!fechaStr) return false;
     
-    const fecha = new Date(fechaStr);
-    if (isNaN(fecha.getTime())) return false;
+    // Usar la nueva función universal de parseo de fechas
+    const fecha = parseUniversalDate(fechaStr);
+    if (!fecha) return false;
     
-    switch (tipo) {
-      case 'dia':
-        return fecha.getDate() === parseInt(dia) &&
-               fecha.getMonth() + 1 === parseInt(mes) &&
-               fecha.getFullYear() === parseInt(anio);
-      case 'mes':
-        return fecha.getMonth() + 1 === parseInt(mes) &&
-               fecha.getFullYear() === parseInt(anio);
-      case 'año':
-        return fecha.getFullYear() === parseInt(anio);
-      default:
-        return true;
-    }
+    // Usar la nueva función de validación de rango
+    return validarFechaEnRango(fecha, tipo, dia, mes, anio);
   });
   
   // Variables para análisis
@@ -61,9 +52,9 @@ export function processPagosData(rawDataPagos, rawDataVentas, tipo, dia, mes, an
         const categoria = categorizarGasto(producto.nombre);
         gastosPorCategoria[categoria] = (gastosPorCategoria[categoria] || 0) + monto;
         
-        detalleGastos.push({
+         detalleGastos.push({
           empresa,
-          fecha: new Date(fechaStr),
+          fecha: fecha, // Usar la fecha ya parseada con parseUniversalDate
           monto,
           producto: producto.nombre,
           categoria
@@ -74,7 +65,8 @@ export function processPagosData(rawDataPagos, rawDataVentas, tipo, dia, mes, an
     }
     
     // Análisis temporal
-    const fecha = new Date(fechaStr);
+    const fecha = parseUniversalDate(fechaStr);
+    if (!fecha) return;
     const diaNum = fecha.getDate();
     const mesNum = fecha.getMonth() + 1;
     
