@@ -1,6 +1,7 @@
 import { json } from "@remix-run/node";
 import { exportToCSV } from "../utils/exportData";
 import { useLoaderData, useSubmit } from "@remix-run/react";
+import { getCachedData, invalidateCache } from "../utils/cache.server";
 import {
   Page,
   Layout,
@@ -42,23 +43,36 @@ export async function loader({ request }) {
     const refreshCache = url.searchParams.get("refreshCache") === "true";
     
     if (refreshCache) {
-      const { clearCache } = await import("../utils/cache.server");
-      clearCache();
+      invalidateCache('dashboard_data');
+      invalidateCache('google_sheets_raw');
+      console.log('[DASHBOARD] Cache invalidated by user request');
     }
     
-    const rawData = await getGoogleSheetsData();
-    const processedData = processSheetData(rawData, tipo, dia, mes, anio);
+    // Crear clave única para este conjunto de filtros
+    const cacheKey = `dashboard_data_${tipo}_${dia}_${mes}_${anio}`;
+    
+    const processedData = await getCachedData(cacheKey, async () => {
+      console.log(`[DASHBOARD] Processing data for ${tipo} - ${dia}/${mes}/${anio}`);
+      
+      const rawData = await getGoogleSheetsData();
+      const processed = processSheetData(rawData, tipo, dia, mes, anio);
+      
+      console.log(`[DASHBOARD] Processed ${rawData?.length || 0} raw records`);
+      return processed;
+    });
     
     return json({
       success: true,
       data: processedData,
-      filters: { tipo, dia, mes, anio }
+      filters: { tipo, dia, mes, anio },
+      cached: true // Indicar que los datos pueden venir del caché
     });
   } catch (error) {
-    console.error("Error:", error);
+    console.error("[DASHBOARD] Error:", error);
     return json({
       success: false,
-      error: error.message
+      error: error.message,
+      cached: false
     });
   }
 }

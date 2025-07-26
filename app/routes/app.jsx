@@ -5,6 +5,8 @@ import { NavMenu } from "@shopify/app-bridge-react";
 import polarisStyles from "@shopify/polaris/build/esm/styles.css?url";
 import { authenticate } from "../shopify.server";
 import { Header } from "../components/Header";
+import { LoadingScreen } from "../components/LoadingScreen";
+import { Suspense } from "react";
 import { Box } from "@shopify/polaris";
 
 export const links = () => [{ rel: "stylesheet", href: polarisStyles }];
@@ -33,7 +35,9 @@ export default function App() {
       <Box>
         <Header />
         <Box paddingBlockStart="0">
-          <Outlet />
+          <Suspense fallback={<LoadingScreen />}>
+            <Outlet />
+          </Suspense>
         </Box>
       </Box>
     </AppProvider>

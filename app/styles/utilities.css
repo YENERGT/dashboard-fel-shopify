@@ -1,0 +1,227 @@
+/* Utilidades CSS - Sistema de clases helper con Design Tokens */
+
+/* === UTILIDADES DE ESPACIADO === */
+.p-1 { padding: var(--space-1) !important; }
+.p-2 { padding: var(--space-2) !important; }
+.p-3 { padding: var(--space-3) !important; }
+.p-4 { padding: var(--space-4) !important; }
+.p-5 { padding: var(--space-5) !important; }
+.p-6 { padding: var(--space-6) !important; }
+.p-8 { padding: var(--space-8) !important; }
+
+.m-1 { margin: var(--space-1) !important; }
+.m-2 { margin: var(--space-2) !important; }
+.m-3 { margin: var(--space-3) !important; }
+.m-4 { margin: var(--space-4) !important; }
+.m-5 { margin: var(--space-5) !important; }
+.m-6 { margin: var(--space-6) !important; }
+.m-8 { margin: var(--space-8) !important; }
+
+.mb-0 { margin-bottom: 0 !important; }
+.mb-2 { margin-bottom: var(--space-2) !important; }
+.mb-4 { margin-bottom: var(--space-4) !important; }
+.mb-6 { margin-bottom: var(--space-6) !important; }
+.mb-8 { margin-bottom: var(--space-8) !important; }
+
+.mt-0 { margin-top: 0 !important; }
+.mt-2 { margin-top: var(--space-2) !important; }
+.mt-4 { margin-top: var(--space-4) !important; }
+.mt-6 { margin-top: var(--space-6) !important; }
+.mt-8 { margin-top: var(--space-8) !important; }
+
+/* === UTILIDADES DE TEXTO === */
+.text-xs { font-size: var(--font-size-xs) !important; }
+.text-sm { font-size: var(--font-size-sm) !important; }
+.text-base { font-size: var(--font-size-base) !important; }
+.text-lg { font-size: var(--font-size-lg) !important; }
+.text-xl { font-size: var(--font-size-xl) !important; }
+.text-2xl { font-size: var(--font-size-2xl) !important; }
+.text-3xl { font-size: var(--font-size-3xl) !important; }
+
+.font-light { font-weight: var(--font-weight-light) !important; }
+.font-normal { font-weight: var(--font-weight-normal) !important; }
+.font-medium { font-weight: var(--font-weight-medium) !important; }
+.font-semibold { font-weight: var(--font-weight-semibold) !important; }
+.font-bold { font-weight: var(--font-weight-bold) !important; }
+
+.text-primary { color: var(--color-text-primary) !important; }
+.text-secondary { color: var(--color-text-secondary) !important; }
+.text-tertiary { color: var(--color-text-tertiary) !important; }
+.text-success { color: var(--color-success) !important; }
+.text-warning { color: var(--color-warning) !important; }
+.text-error { color: var(--color-error) !important; }
+.text-info { color: var(--color-info) !important; }
+
+.text-center { text-align: center !important; }
+.text-left { text-align: left !important; }
+.text-right { text-align: right !important; }
+
+/* === UTILIDADES DE FONDO === */
+.bg-primary { background-color: var(--color-bg-primary) !important; }
+.bg-secondary { background-color: var(--color-bg-secondary) !important; }
+.bg-surface { background-color: var(--color-bg-surface) !important; }
+.bg-success { background-color: var(--color-success-bg) !important; }
+.bg-warning { background-color: var(--color-warning-bg) !important; }
+.bg-error { background-color: var(--color-error-bg) !important; }
+.bg-info { background-color: var(--color-info-bg) !important; }
+
+/* === UTILIDADES DE BORDE === */
+.border { border: var(--border-width-thin) solid var(--color-border-light) !important; }
+.border-medium { border: var(--border-width-medium) solid var(--color-border-medium) !important; }
+.border-thick { border: var(--border-width-thick) solid var(--color-border-dark) !important; }
+
+.border-primary { border-color: var(--color-primary) !important; }
+.border-success { border-color: var(--color-success) !important; }
+.border-warning { border-color: var(--color-warning) !important; }
+.border-error { border-color: var(--color-error) !important; }
+
+.rounded-sm { border-radius: var(--border-radius-sm) !important; }
+.rounded { border-radius: var(--border-radius-base) !important; }
+.rounded-md { border-radius: var(--border-radius-md) !important; }
+.rounded-lg { border-radius: var(--border-radius-lg) !important; }
+.rounded-xl { border-radius: var(--border-radius-xl) !important; }
+.rounded-full { border-radius: var(--border-radius-full) !important; }
+
+/* === UTILIDADES DE SOMBRA === */
+.shadow-sm { box-shadow: var(--shadow-sm) !important; }
+.shadow { box-shadow: var(--shadow-base) !important; }
+.shadow-md { box-shadow: var(--shadow-md) !important; }
+.shadow-lg { box-shadow: var(--shadow-lg) !important; }
+.shadow-xl { box-shadow: var(--shadow-xl) !important; }
+.shadow-none { box-shadow: none !important; }
+
+/* === COMPONENTES ESPECÍFICOS DEL DASHBOARD === */
+.dashboard-card {
+  background: var(--dashboard-card-bg);
+  border: var(--border-width-thin) solid var(--dashboard-card-border);
+  border-radius: var(--dashboard-card-radius);
+  padding: var(--dashboard-card-padding);
+  box-shadow: var(--dashboard-card-shadow);
+  transition: all var(--transition-base);
+}
+
+.dashboard-card:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--color-border-medium);
+}
+
+.dashboard-card--clickable {
+  cursor: pointer;
+}
+
+.dashboard-card--clickable:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-lg);
+}
+
+.dashboard-metric {
+  text-align: center;
+  padding: var(--space-5);
+}
+
+.dashboard-metric__label {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: var(--space-2);
+}
+
+.dashboard-metric__value {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.dashboard-metric__change {
+  font-size: var(--font-size-sm);
+  margin-top: var(--space-1);
+  font-weight: var(--font-weight-medium);
+}
+
+.dashboard-metric__change--positive {
+  color: var(--color-success);
+}
+
+.dashboard-metric__change--negative {
+  color: var(--color-error);
+}
+
+/* === UTILIDADES DE ESTADO === */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--border-radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-badge--success {
+  background-color: var(--color-success-bg);
+  color: var(--color-success);
+  border: var(--border-width-thin) solid var(--color-success);
+}
+
+.status-badge--warning {
+  background-color: var(--color-warning-bg);
+  color: var(--color-warning);
+  border: var(--border-width-thin) solid var(--color-warning);
+}
+
+.status-badge--error {
+  background-color: var(--color-error-bg);
+  color: var(--color-error);
+  border: var(--border-width-thin) solid var(--color-error);
+}
+
+.status-badge--info {
+  background-color: var(--color-info-bg);
+  color: var(--color-info);
+  border: var(--border-width-thin) solid var(--color-info);
+}
+
+/* === UTILIDADES DE LAYOUT === */
+.flex { display: flex !important; }
+.flex-col { flex-direction: column !important; }
+.flex-wrap { flex-wrap: wrap !important; }
+.items-center { align-items: center !important; }
+.items-start { align-items: flex-start !important; }
+.items-end { align-items: flex-end !important; }
+.justify-center { justify-content: center !important; }
+.justify-between { justify-content: space-between !important; }
+.justify-end { justify-content: flex-end !important; }
+
+.grid { display: grid !important; }
+.grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)) !important; }
+.grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+.grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+.grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
+
+.gap-2 { gap: var(--space-2) !important; }
+.gap-4 { gap: var(--space-4) !important; }
+.gap-6 { gap: var(--space-6) !important; }
+.gap-8 { gap: var(--space-8) !important; }
+
+/* === TRANSICIONES === */
+.transition { transition: all var(--transition-base) !important; }
+.transition-fast { transition: all var(--transition-fast) !important; }
+.transition-slow { transition: all var(--transition-slow) !important; }
+
+/* === RESPONSIVO === */
+@media (max-width: 768px) {
+  .md\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .md\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+  .md\:p-4 { padding: var(--space-4) !important; }
+  .md\:text-lg { font-size: var(--font-size-lg) !important; }
+}
+
+@media (max-width: 480px) {
+  .sm\:grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)) !important; }
+  .sm\:p-2 { padding: var(--space-2) !important; }
+  .sm\:text-sm { font-size: var(--font-size-sm) !important; }
+}

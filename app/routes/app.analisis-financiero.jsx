@@ -19,6 +19,7 @@ import { useState, useCallback } from "react";
 import { authenticate } from "../shopify.server";
 import { getGoogleSheetsData, getGoogleSheetsPagos } from "../utils/googleSheets.server";
 import { processPagosData } from "../utils/processPagos.server";
+import { getCachedData, invalidateCache } from "../utils/cache.server";
 import {
   IngresosVsEgresosChart,
   GastosPorCategoriaChart,
@@ -37,14 +38,33 @@ export async function loader({ request }) {
     const mes = url.searchParams.get("mes") || (new Date().getMonth() + 1).toString();
     const anio = url.searchParams.get("anio") || new Date().getFullYear().toString();
     
-    // Obtener datos de ventas y pagos
-    const [rawDataVentas, rawDataPagos] = await Promise.all([
-      getGoogleSheetsData(),
-      getGoogleSheetsPagos()
-    ]);
-    
-    // Procesar los datos
-    const processedData = processPagosData(rawDataPagos, rawDataVentas, tipo, dia, mes, anio);
+const refreshCache = url.searchParams.get("refreshCache") === "true";
+
+if (refreshCache) {
+  invalidateCache('financiero_data');
+  invalidateCache('google_sheets_raw');
+  console.log('[FINANCIERO] Cache invalidated by user request');
+}
+
+// Crear clave única para este conjunto de filtros
+const cacheKey = `financiero_data_${tipo}_${dia}_${mes}_${anio}`;
+
+// Obtener datos procesados con caché
+const processedData = await getCachedData(cacheKey, async () => {
+  console.log(`[FINANCIERO] Processing data for ${tipo} - ${dia}/${mes}/${anio}`);
+  
+  // Obtener datos de ventas y pagos
+  const [rawDataVentas, rawDataPagos] = await Promise.all([
+    getGoogleSheetsData(),
+    getGoogleSheetsPagos()
+  ]);
+  
+  // Procesar los datos
+  const processed = processPagosData(rawDataPagos, rawDataVentas, tipo, dia, mes, anio);
+  
+  console.log(`[FINANCIERO] Processed financial data successfully`);
+  return processed;
+});
     
     if (!processedData) {
       throw new Error("No se pudieron procesar los datos");
@@ -53,7 +73,8 @@ export async function loader({ request }) {
     return json({
       success: true,
       data: processedData,
-      filters: { tipo, dia, mes, anio }
+      filters: { tipo, dia, mes, anio },
+cached: true
     });
   } catch (error) {
     console.error("Error en análisis financiero:", error);

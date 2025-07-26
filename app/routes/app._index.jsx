@@ -1,5 +1,6 @@
 import { json } from "@remix-run/node";
-import { useLoaderData, Link } from "@remix-run/react";
+import { useLoaderData } from "@remix-run/react";
+import { PrefetchLink } from "../components/PrefetchLink";
 import {
   Page,
   Layout,
@@ -290,11 +291,11 @@ export default function Index() {
                     {card.description}
                   </Text>
                   
-                  <Link to={card.link} style={{ textDecoration: 'none' }}>
-                    <Button fullWidth primary={card.buttonPrimary}>
-                      {card.buttonText}
-                    </Button>
-                  </Link>
+                  <PrefetchLink to={card.link} style={{ textDecoration: 'none' }}>
+  <Button fullWidth primary={card.buttonPrimary}>
+    {card.buttonText}
+  </Button>
+</PrefetchLink>
                 </BlockStack>
               </Card>
             ))}
