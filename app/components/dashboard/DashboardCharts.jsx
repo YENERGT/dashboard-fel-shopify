@@ -13,6 +13,7 @@ import {
   RadialLinearScale,
 } from "chart.js";
 import { Line, Bar, Doughnut, Pie, PolarArea } from "react-chartjs-2";
+import { ChartWrapper } from './ChartWrapper';
 
 // Registrar todos los componentes necesarios
 ChartJS.register(
@@ -47,7 +48,7 @@ const commonOptions = {
 };
 
 
-export function VentasPorDiaChart({ ventasDiarias, ventasDiariasAnterior, tipo }) {
+export function VentasChart({ ventasDiarias, ventasDiariasAnterior, tipo }) {
   let labels, datosActuales, datosPeriodoAnterior, titulo;
   
   if (tipo === 'dia') {
@@ -179,16 +180,18 @@ export function VentasPorDiaChart({ ventasDiarias, ventasDiariasAnterior, tipo }
         <Text as="h3" variant="headingMd">
           {titulo}
         </Text>
+        <ChartWrapper delay={1}>  
         <div style={{ height: "350px" }}>
           <Line data={chartData} options={options} />
         </div>
+        </ChartWrapper>
       </BlockStack>
     </Card>
   );
 }
 
 
-export function VentasPorHoraChart({ ventasPorHora }) {
+export function HorasChart({ ventasPorHora }) {
   const horas = Array.from({ length: 24 }, (_, i) => i);
   
   const data = {
@@ -235,15 +238,17 @@ export function VentasPorHoraChart({ ventasPorHora }) {
         <Text as="h3" variant="headingMd">
           🕐 Ventas por Hora
         </Text>
+        <ChartWrapper delay={2}>
         <div style={{ height: "300px" }}>
           <Bar data={data} options={options} />
         </div>
+         </ChartWrapper>
       </BlockStack>
     </Card>
   );
 }
 
-export function TopProductosChart({ topProductos }) {
+export function ProductosChart({ topProductos }) {
   const data = {
     labels: topProductos.slice(0, 10).map(p => 
       p.nombre.length > 30 ? p.nombre.substring(0, 27) + '...' : p.nombre
@@ -287,15 +292,17 @@ export function TopProductosChart({ topProductos }) {
         <Text as="h3" variant="headingMd">
           📦 Top 10 Productos Más Vendidos
         </Text>
+         <ChartWrapper delay={3}>
         <div style={{ height: "300px" }}>
           <Doughnut data={data} options={options} />
         </div>
+        </ChartWrapper>
       </BlockStack>
     </Card>
   );
 }
 
-export function EstadosPedidosChart({ estadosPedidos }) {
+export function EstadosChart({ estadosPedidos }) {
   const estados = {
     'paid': { label: 'Pagado', color: '#4CAF50' },
     'pending': { label: 'Pendiente', color: '#FF9800' },
@@ -348,15 +355,17 @@ export function EstadosPedidosChart({ estadosPedidos }) {
         <Text as="h3" variant="headingMd">
           📊 Estados de Pedidos
         </Text>
+         <ChartWrapper delay={4}>
         <div style={{ height: "300px" }}>
           <Pie data={data} options={options} />
         </div>
+        </ChartWrapper>
       </BlockStack>
     </Card>
   );
 }
 
-export function MetodosPagoChart({ metodosPago }) {
+export function MetodosChart({ metodosPago }) {
   const data = {
     labels: metodosPago.map(m => m.metodo),
     datasets: [
@@ -408,15 +417,17 @@ export function MetodosPagoChart({ metodosPago }) {
         <Text as="h3" variant="headingMd">
           💳 Métodos de Pago
         </Text>
+         <ChartWrapper delay={5}>
         <div style={{ height: "300px" }}>
           <Bar data={data} options={options} />
         </div>
+        </ChartWrapper>
       </BlockStack>
     </Card>
   );
 }
 
-export function VentasPorCiudadChart({ topCiudades }) {
+export function CiudadesChart({ topCiudades }) {
   if (!topCiudades || topCiudades.length === 0) return null;
 
   const data = {
@@ -473,15 +484,17 @@ export function VentasPorCiudadChart({ topCiudades }) {
         <Text as="h3" variant="headingMd">
           🏙️ Ventas por Ciudad
         </Text>
+         <ChartWrapper delay={6}>
         <div style={{ height: "300px" }}>
           <Bar data={data} options={options} />
         </div>
+        </ChartWrapper>
       </BlockStack>
     </Card>
   );
 }
 
-export function VentasPorDepartamentoChart({ topDepartamentos }) {
+export function DepartamentosChart({ topDepartamentos }) {
   if (!topDepartamentos || topDepartamentos.length === 0) return null;
 
   const colores = [
@@ -533,15 +546,17 @@ export function VentasPorDepartamentoChart({ topDepartamentos }) {
         <Text as="h3" variant="headingMd">
           📍 Ventas por Departamento
         </Text>
+        <ChartWrapper delay={7}> 
         <div style={{ height: "300px" }}>
           <Doughnut data={data} options={options} />
         </div>
+        </ChartWrapper>
       </BlockStack>
     </Card>
   );
 }
 
-export function CategoriaProductosChart({ categoriasProductos }) {
+export function CategoriasChart({ categoriasProductos }) {
   if (!categoriasProductos || Object.keys(categoriasProductos).length === 0) return null;
 
   const categorias = Object.entries(categoriasProductos)
@@ -592,15 +607,17 @@ export function CategoriaProductosChart({ categoriasProductos }) {
         <Text as="h3" variant="headingMd">
           🏷️ Categorías de Productos
         </Text>
+         <ChartWrapper delay={8}>
         <div style={{ height: "300px" }}>
           <PolarArea data={data} options={options} />
         </div>
+        </ChartWrapper>
       </BlockStack>
     </Card>
   );
 }
 
-export function MarcasVehiculosChart({ topMarcas }) {
+export function MarcasChart({ topMarcas }) {
   if (!topMarcas || topMarcas.length === 0) return null;
 
   const coloresMarcas = {
@@ -669,15 +686,17 @@ export function MarcasVehiculosChart({ topMarcas }) {
         <Text as="h3" variant="headingMd">
           🚗 Ventas por Marca de Vehículo
         </Text>
+         <ChartWrapper delay={9}>  
         <div style={{ height: "300px" }}>
           <Bar data={data} options={options} />
         </div>
+        </ChartWrapper>
       </BlockStack>
     </Card>
   );
 }
 
-export function TopNITsChart({ topNITs }) {
+export function NITsChart({ topNITs }) {
   if (!topNITs || topNITs.length === 0) return null;
 
   const data = {
@@ -716,9 +735,11 @@ export function TopNITsChart({ topNITs }) {
         <Text as="h3" variant="headingMd">
           🆔 NITs más Frecuentes
         </Text>
+         <ChartWrapper delay={10}>  {/* NUEVO: Envolver el div */}
         <div style={{ height: "300px" }}>
           <Bar data={data} options={options} />
         </div>
+        </ChartWrapper>
       </BlockStack>
     </Card>
   );

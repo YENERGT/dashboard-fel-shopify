@@ -1,6 +1,8 @@
+import { EnhancedDataTable } from "../components/dashboard/EnhancedDataTable";
+import { MetricCard } from "../components/dashboard/MetricCard";
 import { json } from "@remix-run/node";
 import { exportToCSV } from "../utils/exportData";
-import { useLoaderData, useSubmit } from "@remix-run/react";
+import { useLoaderData, useSubmit, useNavigation } from "@remix-run/react";
 import { getCachedData, invalidateCache } from "../utils/cache.server";
 import {
   Page,
@@ -16,20 +18,20 @@ import {
   Badge,
   Divider,
 } from "@shopify/polaris";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { getGoogleSheetsData } from "../utils/googleSheets.server";
 import { processSheetData } from "../utils/processData.server";
 import { 
-  VentasPorDiaChart, 
-  VentasPorHoraChart,
-  TopProductosChart,
-  EstadosPedidosChart,
-  MetodosPagoChart,
-  VentasPorCiudadChart,
-  VentasPorDepartamentoChart,
-  CategoriaProductosChart,
-  MarcasVehiculosChart,
-  TopNITsChart
+  VentasChart,          // ✅ Correcto (antes era VentasPorDiaChart)
+  HorasChart,           // ✅ Correcto (antes era VentasPorHoraChart)
+  ProductosChart,       // ✅ Correcto (antes era TopProductosChart)
+  EstadosChart,         // ✅ Correcto (antes era EstadosPedidosChart)
+  MetodosChart,         // ✅ Correcto (antes era MetodosPagoChart)
+  CiudadesChart,        // ✅ Correcto (antes era VentasPorCiudadChart)
+  DepartamentosChart,   // ✅ Correcto (antes era VentasPorDepartamentoChart)
+  CategoriasChart,      // ✅ Correcto (antes era CategoriaProductosChart)
+  MarcasChart,          // ✅ Correcto (antes era MarcasVehiculosChart)
+  NITsChart             // ✅ Correcto (antes era TopNITsChart)
 } from "../components/dashboard/DashboardCharts";
 
 export async function loader({ request }) {
@@ -80,6 +82,7 @@ export async function loader({ request }) {
 export default function Dashboard() {
   const { success, data, filters, error } = useLoaderData();
   const submit = useSubmit();
+  const navigation = useNavigation();
   
   const [selectedTipo, setSelectedTipo] = useState(filters?.tipo || "mes");
   const [selectedDia, setSelectedDia] = useState(filters?.dia || "");
@@ -90,6 +93,33 @@ export default function Dashboard() {
   const handleDiaChange = useCallback((value) => setSelectedDia(value), []);
   const handleMesChange = useCallback((value) => setSelectedMes(value), []);
   const handleAnioChange = useCallback((value) => setSelectedAnio(value), []);
+
+  // Efecto para animaciones
+  useEffect(() => {
+  // Agregar clases de animación a las cards cuando se carga la página
+  const cards = document.querySelectorAll('.dashboard-card, .polaris-card');
+  cards.forEach((card, index) => {
+    card.style.animationDelay = `${index * 0.1}s`;
+    card.classList.add('animate__animated', 'animate__fadeInUp');
+  });
+    
+    // Inicializar NProgress si está disponible
+    if (typeof window !== 'undefined' && window.NProgress) {
+    window.NProgress.configure({ 
+      showSpinner: false,
+      trickleSpeed: 200 
+    });
+  }
+}, [data]);
+  
+  // Mostrar loading bar en transiciones
+  useEffect(() => {
+  if (navigation.state === "loading" && typeof window !== 'undefined' && window.NProgress) {
+    window.NProgress.start();
+  } else if (navigation.state !== "loading" && typeof window !== 'undefined' && window.NProgress) {
+    window.NProgress.done();
+  }
+}, [navigation.state]);
 
   const handleSubmit = useCallback(() => {
     const formData = new FormData();
@@ -232,208 +262,80 @@ export default function Dashboard() {
         
        {/* Métricas principales - Primera fila */}
 <InlineGrid 
-  columns={{
-    xs: 1,
-    sm: 2,
-    md: 3,
-    lg: 6
-  }} 
-  gap={{
-    xs: "200",
-    sm: "300",
-    md: "400"
-  }}
+  columns={{ xs: 1, sm: 2, md: 2, lg: 4 }} 
+  gap={{ xs: "400", sm: "400", md: "400", lg: "400" }}
 >
-  <Card>
-    <BlockStack gap="200">
-      <InlineStack align="space-between">
-        <Text as="h3" variant="headingMd" tone="subdued">
-          💰 Total Ventas
-        </Text>
-        {data.comparacion && (
-          <Badge tone={data.comparacion.totalVentas.cambio >= 0 ? "success" : "critical"}>
-            {data.comparacion.totalVentas.cambio >= 0 ? "↑" : "↓"} {Math.abs(data.comparacion.totalVentas.cambio).toFixed(1)}%
-          </Badge>
-        )}
-      </InlineStack>
-      <Text as="p" variant="heading2xl" tone="success">
-        Q {data.totalVentas.toFixed(2)}
-      </Text>
-      {data.comparacion && (
-        <Text as="p" variant="bodySm" tone="subdued">
-          vs Q {data.comparacion.totalVentas.anterior.toFixed(2)}
-        </Text>
-      )}
-    </BlockStack>
-  </Card>
-
-  <Card>
-    <BlockStack gap="200">
-      <InlineStack align="space-between">
-        <Text as="h3" variant="headingMd" tone="subdued">
-          📋 Total IVA (12%)
-        </Text>
-        {data.comparacion && (
-          <Badge tone={data.comparacion.totalIVA.cambio >= 0 ? "success" : "critical"}>
-            {data.comparacion.totalIVA.cambio >= 0 ? "↑" : "↓"} {Math.abs(data.comparacion.totalIVA.cambio).toFixed(1)}%
-          </Badge>
-        )}
-      </InlineStack>
-      <Text as="p" variant="heading2xl">
-        Q {data.totalIVA.toFixed(2)}
-      </Text>
-      {data.comparacion && (
-        <Text as="p" variant="bodySm" tone="subdued">
-          vs Q {data.comparacion.totalIVA.anterior.toFixed(2)}
-        </Text>
-      )}
-    </BlockStack>
-  </Card>
-
-  <Card>
-    <BlockStack gap="200">
-      <InlineStack align="space-between">
-        <Text as="h3" variant="headingMd" tone="subdued">
-          💵 Ventas Netas
-        </Text>
-        {data.comparacion && (
-          <Badge tone={data.comparacion.ventasNetas.cambio >= 0 ? "success" : "critical"}>
-            {data.comparacion.ventasNetas.cambio >= 0 ? "↑" : "↓"} {Math.abs(data.comparacion.ventasNetas.cambio).toFixed(1)}%
-          </Badge>
-        )}
-      </InlineStack>
-      <Text as="p" variant="heading2xl">
-        Q {data.ventasNetas.toFixed(2)}
-      </Text>
-      {data.comparacion && (
-        <Text as="p" variant="bodySm" tone="subdued">
-          vs Q {data.comparacion.ventasNetas.anterior.toFixed(2)}
-        </Text>
-      )}
-    </BlockStack>
-  </Card>
-
-  <Card>
-    <BlockStack gap="200">
-      <InlineStack align="space-between">
-        <Text as="h3" variant="headingMd" tone="subdued">
-          📦 Total Pedidos
-        </Text>
-        {data.comparacion && (
-          <Badge tone={data.comparacion.totalPedidos.cambio >= 0 ? "success" : "critical"}>
-            {data.comparacion.totalPedidos.cambio >= 0 ? "↑" : "↓"} {Math.abs(data.comparacion.totalPedidos.cambio).toFixed(1)}%
-          </Badge>
-        )}
-      </InlineStack>
-      <Text as="p" variant="heading2xl" tone="info">
-        {data.totalPedidos}
-      </Text>
-      {data.comparacion && (
-        <Text as="p" variant="bodySm" tone="subdued">
-          vs {data.comparacion.totalPedidos.anterior}
-        </Text>
-      )}
-    </BlockStack>
-  </Card>
-
-  <Card>
-    <BlockStack gap="200">
-      <InlineStack align="space-between">
-        <Text as="h3" variant="headingMd" tone="subdued">
-          📊 Promedio/Pedido
-        </Text>
-        {data.comparacion && (
-          <Badge tone={data.comparacion.promedioPorPedido.cambio >= 0 ? "success" : "critical"}>
-            {data.comparacion.promedioPorPedido.cambio >= 0 ? "↑" : "↓"} {Math.abs(data.comparacion.promedioPorPedido.cambio).toFixed(1)}%
-          </Badge>
-        )}
-      </InlineStack>
-      <Text as="p" variant="heading2xl">
-        Q {data.promedioPorPedido.toFixed(2)}
-      </Text>
-      {data.comparacion && (
-        <Text as="p" variant="bodySm" tone="subdued">
-          vs Q {data.comparacion.promedioPorPedido.anterior.toFixed(2)}
-        </Text>
-      )}
-    </BlockStack>
-  </Card>
-
-  <Card>
-    <BlockStack gap="200">
-      <Text as="h3" variant="headingMd" tone="subdued">
-        📅 Días con Ventas
-      </Text>
-      <Text as="p" variant="heading2xl">
-        {data.diasConVentas}
-      </Text>
-    </BlockStack>
-  </Card>
+  <MetricCard
+    title="Total Ventas"
+    value={`Q ${data.totalVentas.toFixed(2)}`}
+    icon="💰"
+    format="currency"
+    delay={1}
+    change={data.comparacion?.totalVentas?.cambio}
+  />
+  
+  <MetricCard
+    title="Total Pedidos"
+    value={data.totalPedidos.toString()}
+    icon="📦"
+    format="number"
+    delay={2}
+    change={data.comparacion?.totalPedidos?.cambio}
+  />
+  
+  <MetricCard
+    title="Ticket Promedio"
+    value={`Q ${data.promedioPorPedido.toFixed(2)}`}
+    icon="🎯"
+    format="currency"
+    delay={3}
+    change={data.comparacion?.promedioPorPedido?.cambio}
+  />
+  
+  <MetricCard
+    title="Total IVA"
+    value={`Q ${data.totalIVA.toFixed(2)}`}
+    icon="📊"
+    format="currency"
+    delay={4}
+  />
 </InlineGrid>
 
 {/* Segunda fila de métricas */}
 <InlineGrid 
-  columns={{
-    xs: 1,
-    sm: 1,
-    md: 3
-  }} 
-  gap={{
-    xs: "200",
-    sm: "300",
-    md: "400"
-  }}
+  columns={{ xs: 1, sm: 1, md: 3 }} 
+  gap={{ xs: "400", sm: "400", md: "400" }}
 >
-  <Card>
-    <BlockStack gap="200">
-      <InlineStack align="space-between">
-        <Text as="h3" variant="headingMd" tone="subdued">
-          📈 Promedio Diario
-        </Text>
-        {data.comparacion && (
-          <Badge tone={data.comparacion.promedioDiario.cambio >= 0 ? "success" : "critical"}>
-            {data.comparacion.promedioDiario.cambio >= 0 ? "↑" : "↓"} {Math.abs(data.comparacion.promedioDiario.cambio).toFixed(1)}%
-          </Badge>
-        )}
-      </InlineStack>
-      <Text as="p" variant="headingXl">
-        Q {data.promedioDiario.toFixed(2)}
-      </Text>
-      {data.comparacion && (
-        <Text as="p" variant="bodySm" tone="subdued">
-          vs Q {data.comparacion.promedioDiario.anterior.toFixed(2)}
-        </Text>
-      )}
-    </BlockStack>
-  </Card>
+  <MetricCard
+    title="Promedio Diario"
+    value={`Q ${data.promedioDiario.toFixed(2)}`}
+    icon="📈"
+    format="currency"
+    delay={5}
+    change={data.comparacion?.promedioDiario?.cambio}
+  />
 
-  <Card>
-    <BlockStack gap="200">
-      <Text as="h3" variant="headingMd" tone="subdued">
-        💹 Venta Máxima
-      </Text>
-      <Text as="p" variant="headingXl" tone="success">
-        Q {data.ventaMaxima.toFixed(2)}
-      </Text>
-    </BlockStack>
-  </Card>
+  <MetricCard
+    title="Venta Máxima"
+    value={`Q ${data.ventaMaxima.toFixed(2)}`}
+    icon="💹"
+    format="currency"
+    delay={6}
+  />
 
-  <Card>
-    <BlockStack gap="200">
-      <Text as="h3" variant="headingMd" tone="subdued">
-        📉 Venta Mínima
-      </Text>
-      <Text as="p" variant="headingXl" tone="critical">
-        Q {data.ventaMinima.toFixed(2)}
-      </Text>
-    </BlockStack>
-  </Card>
+  <MetricCard
+    title="Venta Mínima"
+    value={`Q ${data.ventaMinima.toFixed(2)}`}
+    icon="📉"
+    format="currency"
+    delay={7}
+  />
 </InlineGrid> 
 
         {/* Gráfica principal de ventas */}
 {data.ventasDiarias && Object.keys(data.ventasDiarias).length > 0 && (
   <div style={{ marginBottom: "20px" }}>
-    <VentasPorDiaChart 
+    <VentasChart 
       ventasDiarias={data.ventasDiarias} 
       ventasDiariasAnterior={data.ventasDiariasAnterior}
       tipo={data.tipoVisualizacion} 
@@ -456,15 +358,15 @@ export default function Dashboard() {
   }}
 >
   {data.topProductos && data.topProductos.length > 0 && (
-    <TopProductosChart topProductos={data.topProductos} />
+<ProductosChart topProductos={data.topProductos} />
   )}
   
   {data.estadosPedidos && (
-    <EstadosPedidosChart estadosPedidos={data.estadosPedidos} />
+<EstadosChart estadosPedidos={data.estadosPedidos} />
   )}
   
   {data.topCiudades && data.topCiudades.length > 0 && (
-    <VentasPorCiudadChart topCiudades={data.topCiudades} />
+<CiudadesChart topCiudades={data.topCiudades} />
   )}
 </InlineGrid>
 
@@ -483,15 +385,15 @@ export default function Dashboard() {
   }}
 >
   {data.topDepartamentos && data.topDepartamentos.length > 0 && (
-    <VentasPorDepartamentoChart topDepartamentos={data.topDepartamentos} />
+<DepartamentosChart topDepartamentos={data.topDepartamentos} />
   )}
   
   {data.metodosPago && data.metodosPago.length > 0 && (
-    <MetodosPagoChart metodosPago={data.metodosPago} />
+<MetodosChart metodosPago={data.metodosPago} />
   )}
   
   {data.categoriasProductos && Object.keys(data.categoriasProductos).length > 0 && (
-    <CategoriaProductosChart categoriasProductos={data.categoriasProductos} />
+<CategoriasChart categoriasProductos={data.categoriasProductos} />
   )}
 </InlineGrid>
 
@@ -510,11 +412,11 @@ export default function Dashboard() {
   }}
 >
   {data.topMarcas && data.topMarcas.length > 0 && (
-    <MarcasVehiculosChart topMarcas={data.topMarcas} />
+<MarcasChart topMarcas={data.topMarcas} />
   )}
   
   {data.topNITs && data.topNITs.length > 0 && (
-    <TopNITsChart topNITs={data.topNITs} />
+<NITsChart topNITs={data.topNITs} />
   )}
   
   {/* Espacio vacío para mantener la alineación */}
@@ -530,7 +432,7 @@ export default function Dashboard() {
                 <Text as="h3" variant="headingLg">
                   🏆 Top 10 Clientes
                 </Text>
-                <DataTable
+                <EnhancedDataTable
                   columnContentTypes={["text", "numeric", "numeric", "numeric", "numeric"]}
                   headings={["Cliente", "Total", "Pedidos", "Ticket Promedio", "% del Total"]}
                   rows={data.topClientes.map((cliente) => [
@@ -540,6 +442,7 @@ export default function Dashboard() {
                     `Q ${cliente.ticketPromedio.toFixed(2)}`,
                     `${((cliente.total / data.totalVentas) * 100).toFixed(1)}%`
                   ])}
+                  delay={10}
                 />
               </BlockStack>
             </Card>
@@ -554,7 +457,7 @@ export default function Dashboard() {
                 <Text as="h3" variant="headingLg">
                   📦 Top 15 Productos Más Vendidos
                 </Text>
-                <DataTable
+                <EnhancedDataTable
                   columnContentTypes={["text", "numeric", "numeric", "numeric"]}
                   headings={["Producto", "Cantidad", "Total", "Precio Promedio"]}
                   rows={data.topProductos.map((producto) => [
@@ -563,6 +466,7 @@ export default function Dashboard() {
                     `Q ${producto.total.toFixed(2)}`,
                     `Q ${(producto.total / producto.cantidad).toFixed(2)}`
                   ])}
+                  delay={10}
                 />
               </BlockStack>
             </Card>
@@ -578,7 +482,7 @@ export default function Dashboard() {
                   🏙️ Top Ciudades por Ventas
                 </Text>
                 {data.topCiudades && data.topCiudades.length > 0 ? (
-                  <DataTable
+                  <EnhancedDataTable
                     columnContentTypes={["text", "numeric", "numeric", "numeric", "numeric"]}
                     headings={["Ciudad", "Pedidos", "Total Ventas", "Ticket Promedio", "% del Total"]}
                     rows={data.topCiudades.map((ciudad) => [
@@ -588,6 +492,7 @@ export default function Dashboard() {
                       `Q ${(ciudad.total / ciudad.cantidad).toFixed(2)}`,
                       `${((ciudad.total / data.totalVentas) * 100).toFixed(1)}%`
                     ])}
+                    delay={10}
                   />
                 ) : (
                   <Text as="p" variant="bodyMd" tone="subdued">
@@ -608,7 +513,7 @@ export default function Dashboard() {
                   <Text as="h3" variant="headingLg">
                     🚗 Análisis de Marcas de Vehículos
                   </Text>
-                  <DataTable
+                  <EnhancedDataTable
                     columnContentTypes={["text", "numeric", "numeric", "numeric"]}
                     headings={["Marca", "Cantidad de Productos", "Total en Ventas", "% del Total"]}
                     rows={data.topMarcas.map((marca) => {
@@ -620,6 +525,7 @@ export default function Dashboard() {
                         `${((marca.total / totalMarcas) * 100).toFixed(1)}%`
                       ];
                     })}
+                    delay={10}
                   />
                 </BlockStack>
               </Card>
@@ -636,7 +542,7 @@ export default function Dashboard() {
                   <Text as="h3" variant="headingLg">
                     💳 Análisis de Métodos de Pago
                   </Text>
-                  <DataTable
+                  <EnhancedDataTable
                     columnContentTypes={["text", "numeric", "numeric", "numeric", "numeric"]}
                     headings={["Método de Pago", "Transacciones", "Total Procesado", "Promedio/Transacción", "% del Total"]}
                     rows={data.metodosPago.map((metodo) => {
@@ -649,6 +555,7 @@ export default function Dashboard() {
                         `${((metodo.total / totalPagos) * 100).toFixed(1)}%`
                       ];
                     })}
+                    delay={10}
                   />
                 </BlockStack>
               </Card>

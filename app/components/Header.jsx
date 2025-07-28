@@ -1,6 +1,18 @@
 import { Box, InlineStack, Image } from "@shopify/polaris";
+import { useEffect, useState } from 'react';
 
 export function Header() {
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 10);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   return (
     <Box
       background="bg-surface"
@@ -13,7 +25,10 @@ export function Header() {
       style={{
         height: "60px",
         zIndex: 100,
-        boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
+        boxShadow: scrolled ? "0 4px 12px rgba(0,0,0,0.15)" : "0 2px 4px rgba(0,0,0,0.1)",
+        transition: "all 0.3s ease",
+        backdropFilter: scrolled ? "blur(10px)" : "none",
+        backgroundColor: scrolled ? "rgba(255,255,255,0.9)" : "white"
       }}
     >
       <InlineStack align="center" blockAlign="center" gap="400">
@@ -24,7 +39,9 @@ export function Header() {
             style={{
               height: "80px",
               width: "auto",
-              objectFit: "contain"
+              objectFit: "contain",
+              transform: scrolled ? "scale(0.9)" : "scale(1)",
+              transition: "transform 0.3s ease"
             }}
           />
         </Box>

@@ -7,12 +7,12 @@ import {
 } from "@remix-run/react";
 import polarisStyles from "@shopify/polaris/build/esm/styles.css?url";
 import tokensStyles from "./styles/tokens.css?url";
+import dashboardEnhancedStyles from "./styles/dashboard-enhanced.css?url";
+import dashboardFinalStyles from "./styles/dashboard-final.css?url";
 
 // CSS crítico inline para carga inmediata
 const criticalCSS = `
 /* CSS Crítico Inline - Usando Design Tokens */
-@import url('/styles/tokens.css');
-
 /* Variables de compatibilidad con Polaris */
 :root {
   --p-font-family-sans: var(--font-family-primary);
@@ -33,31 +33,30 @@ const criticalCSS = `
 *, *::before, *::after { box-sizing: border-box; }
 body { 
   margin: 0; padding: 0; 
-  font-family: var(--font-family-primary); 
-  background-color: var(--color-bg-primary); 
-  color: var(--color-text-primary); 
-  line-height: var(--line-height-normal); 
-  transition: background-color var(--transition-base);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+  background-color: #fafbfb; 
+  color: #202223; 
+  line-height: 1.5; 
 }
 
 .polaris-app-provider { height: 100vh; }
 .polaris-frame { display: flex; height: 100vh; }
 .polaris-frame__main { 
   flex: 1; 
-  padding: var(--space-4); 
-  background: var(--color-bg-primary);
+  padding: 1rem; 
+  background: #fafbfb;
 }
 .polaris-card, .dashboard-card { 
-  background: var(--dashboard-card-bg); 
-  border: var(--border-width-thin) solid var(--dashboard-card-border); 
-  border-radius: var(--dashboard-card-radius); 
-  padding: var(--dashboard-card-padding); 
-  margin-bottom: var(--space-4);
-  box-shadow: var(--dashboard-card-shadow);
-  transition: box-shadow var(--transition-base);
+  background: #ffffff; 
+  border: 1px solid #e1e3e5; 
+  border-radius: 0.5rem; 
+  padding: 1.5rem; 
+  margin-bottom: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.3s ease;
 }
 .polaris-card:hover, .dashboard-card:hover {
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 .skeleton { 
@@ -70,12 +69,18 @@ body {
   100% { background-position: -200% 0; } 
 }
 .skeleton-text { height: 1rem; border-radius: 4px; margin-bottom: 0.5rem; }
-.skeleton-card { height: 200px; border-radius: var(--p-border-radius-base); margin-bottom: var(--p-space-4); }
+.skeleton-card { height: 200px; border-radius: 0.5rem; margin-bottom: 1rem; }
 `;
 
 export const links = () => [
   // Tokens CSS - carga inmediata
   { rel: "stylesheet", href: tokensStyles },
+  // Dashboard Enhanced CSS
+  { rel: "stylesheet", href: dashboardEnhancedStyles },
+  // Dashboard Final CSS
+  { rel: "stylesheet", href: dashboardFinalStyles },
+  // NProgress para loading bar
+  { rel: "stylesheet", href: "https://unpkg.com/nprogress@0.2.0/nprogress.css" },
   // Preload crítico
   { rel: "preload", href: polarisStyles, as: "style" },
   // CSS no crítico con lazy loading
@@ -98,24 +103,20 @@ export default function App() {
         <style dangerouslySetInnerHTML={{ __html: criticalCSS }} />
         
         <Meta />
-<Links />
+        <Links />
 
-{/* DNS Prefetch para servicios externos */}
-<link rel="dns-prefetch" href="//fonts.googleapis.com" />
-<link rel="dns-prefetch" href="//fonts.gstatic.com" />
-<link rel="dns-prefetch" href="//sheets.googleapis.com" />
+        {/* DNS Prefetch para servicios externos */}
+        <link rel="dns-prefetch" href="//fonts.googleapis.com" />
+        <link rel="dns-prefetch" href="//fonts.gstatic.com" />
+        <link rel="dns-prefetch" href="//sheets.googleapis.com" />
 
-{/* Preconnect para recursos críticos */}
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        {/* Preconnect para recursos críticos */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
 
-{/* Preload recursos críticos */}
-<link rel="modulepreload" href="/build/entry.client.js" />
-<link rel="preload" href="/build/root.js" as="script" />
-
-{/* Resource hints para navegación */}
-<link rel="prefetch" href="/app/dashboard" />
-<link rel="prefetch" href="/app/analisis-financiero" />
+        {/* Resource hints para navegación */}
+        <link rel="prefetch" href="/app/dashboard" />
+        <link rel="prefetch" href="/app/analisis-financiero" />
       </head>
       <body>
         <Outlet />
@@ -132,6 +133,8 @@ export default function App() {
             });
           `
         }} />
+        {/* Script de NProgress */}
+        <script src="https://unpkg.com/nprogress@0.2.0/nprogress.js"></script>
       </body>
     </html>
   );

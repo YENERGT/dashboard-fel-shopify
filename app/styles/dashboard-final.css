@@ -1,0 +1,88 @@
+/* === DASHBOARD FINAL TOUCHES === */
+
+/* Tooltip mejorado */
+[data-tooltip] {
+  position: relative;
+  cursor: help;
+}
+
+[data-tooltip]:hover::before {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 8px 12px;
+  background: var(--gentelella-dark);
+  color: white;
+  font-size: 12px;
+  white-space: nowrap;
+  border-radius: 4px;
+  opacity: 0;
+  animation: tooltipFadeIn 0.3s ease forwards;
+  z-index: 1000;
+}
+
+@keyframes tooltipFadeIn {
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(-5px);
+  }
+}
+
+/* Mejoras para modo oscuro */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg-primary: #1a1a1a;
+    --color-bg-surface: #2a2a2a;
+    --dashboard-card-bg: #2a2a2a;
+    --dashboard-card-border: #3a3a3a;
+  }
+
+  .dashboard-card,
+  .polaris-card {
+    background: var(--dashboard-card-bg);
+    border-color: var(--dashboard-card-border);
+  }
+}
+
+/* Efecto de glass morphism para cards especiales */
+.glass-card {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Mejora para exportar botón */
+.export-button {
+  position: relative;
+  overflow: hidden;
+}
+
+.export-button::after {
+  content: '📥';
+  position: absolute;
+  top: 50%;
+  left: -30px;
+  transform: translateY(-50%);
+  transition: left 0.3s ease;
+}
+
+.export-button:hover::after {
+  left: 10px;
+}
+
+/* Print styles */
+@media print {
+  .polaris-navigation,
+  .polaris-frame__navigation,
+  .export-button,
+  header {
+    display: none !important;
+  }
+
+  .dashboard-card {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}
