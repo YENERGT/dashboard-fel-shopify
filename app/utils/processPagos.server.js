@@ -9,9 +9,9 @@ export function processPagosData(rawDataPagos, rawDataVentas, tipo, dia, mes, an
   
   // Obtener total de ingresos del procesamiento de ventas
   const ventasData = processSheetData(rawDataVentas, tipo, dia, mes, anio, false);
-  const totalIngresos = ventasData.totalVentas;
+console.log('[PAGOS] ventasData keys:', Object.keys(ventasData)); // Agregar este log
+const totalIngresos = ventasData.totalVentas;
   
-  // Filtrar pagos según fecha - NUEVA IMPLEMENTACIÓN
   const filteredPagos = dataPagos.filter(row => {
     const fechaStr = row[1]; // Columna B: FECHA
     if (!fechaStr) return false;
@@ -110,6 +110,38 @@ export function processPagosData(rawDataPagos, rawDataVentas, tipo, dia, mes, an
   const promedioGastoDiario = totalEgresos / Math.max(Object.keys(gastosPorDia).length, 1);
   const ratioGastosIngresos = totalIngresos > 0 ? (totalEgresos / totalIngresos) * 100 : 0;
   
+
+  // Calcular profit mensual para la tendencia
+const profitMensual = [];
+if (tipo === 'año') {
+  for (let mes = 1; mes <= 12; mes++) {
+    const ventasMes = ventasData.ventasDiarias?.[mes] || 0;  // ✅ Usar ventasData.ventasDiarias
+    const gastosMes = gastosPorMes[mes] || 0;  // ✅ También cambiar a gastosPorMes
+    profitMensual.push(ventasMes - gastosMes);
+  }
+}
+  
+
+  // Calcular flujo de caja semanal (para el mes actual)
+const flujoSemanal = [];
+if (tipo === 'mes') {
+  for (let semana = 0; semana < 4; semana++) {
+    const inicioSemana = semana * 7 + 1;
+    const finSemana = Math.min((semana + 1) * 7, 31);
+    
+    let entradas = 0;
+    let salidas = 0;
+    
+    for (let dia = inicioSemana; dia <= finSemana; dia++) {
+      entradas += ventasData.ventasDiarias?.[dia] || 0;  // ✅ Usar ventasData.ventasDiarias
+      salidas += gastosPorDia[dia] || 0;
+    }
+    
+    flujoSemanal.push({ entradas, salidas });
+  }
+}
+
+
   return {
     // Métricas principales
     totalIngresos,
@@ -133,7 +165,9 @@ export function processPagosData(rawDataPagos, rawDataVentas, tipo, dia, mes, an
     
     // Datos para gráficas de comparación
     ventasDiarias: ventasData.ventasDiarias,
-    tipoVisualizacion: tipo
+    tipoVisualizacion: tipo,
+    profitMensual,      // Agregar
+    flujoSemanal        // Agregar
   };
 }
 

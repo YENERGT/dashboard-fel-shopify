@@ -1,3 +1,4 @@
+import { MetricCard } from "../components/dashboard/MetricCard";
 import { json } from "@remix-run/node";
 import { useLoaderData, useSubmit } from "@remix-run/react";
 import {
@@ -15,7 +16,7 @@ import {
   Banner,
   DataTable,
 } from "@shopify/polaris";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { authenticate } from "../shopify.server";
 import { getGoogleSheetsData, getGoogleSheetsPagos } from "../utils/googleSheets.server";
 import { processPagosData } from "../utils/processPagos.server";
@@ -25,46 +26,49 @@ import {
   GastosPorCategoriaChart,
   EvolucionGastosChart,
   TopEmpresasGastosChart,
-  TablaDetalleGastos
+  TablaDetalleGastos,
+  TendenciaProfitChart,  // Nueva
+  FlujoCajaChart         // Nueva
 } from "../components/dashboard/FinancialCharts";
 
 export async function loader({ request }) {
   await authenticate.admin(request);
   
+  // MOVER LAS VARIABLES FUERA DEL TRY
+  const url = new URL(request.url);
+  const tipo = url.searchParams.get("tipo") || "mes";
+  const dia = url.searchParams.get("dia") || "";
+  const mes = url.searchParams.get("mes") || (new Date().getMonth() + 1).toString();
+  const anio = url.searchParams.get("anio") || new Date().getFullYear().toString();
+  
   try {
-    const url = new URL(request.url);
-    const tipo = url.searchParams.get("tipo") || "mes";
-    const dia = url.searchParams.get("dia") || "";
-    const mes = url.searchParams.get("mes") || (new Date().getMonth() + 1).toString();
-    const anio = url.searchParams.get("anio") || new Date().getFullYear().toString();
-    
-const refreshCache = url.searchParams.get("refreshCache") === "true";
+    const refreshCache = url.searchParams.get("refreshCache") === "true";
 
-if (refreshCache) {
-  invalidateCache('financiero_data');
-  invalidateCache('google_sheets_raw');
-  console.log('[FINANCIERO] Cache invalidated by user request');
-}
+    if (refreshCache) {
+      invalidateCache('financiero_data');
+      invalidateCache('google_sheets_raw');
+      console.log('[FINANCIERO] Cache invalidated by user request');
+    }
 
-// Crear clave única para este conjunto de filtros
-const cacheKey = `financiero_data_${tipo}_${dia}_${mes}_${anio}`;
+    // Crear clave única para este conjunto de filtros
+    const cacheKey = `financiero_data_${tipo}_${dia}_${mes}_${anio}`;
 
-// Obtener datos procesados con caché
-const processedData = await getCachedData(cacheKey, async () => {
-  console.log(`[FINANCIERO] Processing data for ${tipo} - ${dia}/${mes}/${anio}`);
-  
-  // Obtener datos de ventas y pagos
-  const [rawDataVentas, rawDataPagos] = await Promise.all([
-    getGoogleSheetsData(),
-    getGoogleSheetsPagos()
-  ]);
-  
-  // Procesar los datos
-  const processed = processPagosData(rawDataPagos, rawDataVentas, tipo, dia, mes, anio);
-  
-  console.log(`[FINANCIERO] Processed financial data successfully`);
-  return processed;
-});
+    // Obtener datos procesados con caché
+    const processedData = await getCachedData(cacheKey, async () => {
+      console.log(`[FINANCIERO] Processing data for ${tipo} - ${dia}/${mes}/${anio}`);
+      
+      // Obtener datos de ventas y pagos
+      const [rawDataVentas, rawDataPagos] = await Promise.all([
+        getGoogleSheetsData(),
+        getGoogleSheetsPagos()
+      ]);
+      
+      // Procesar los datos
+      const processed = processPagosData(rawDataPagos, rawDataVentas, tipo, dia, mes, anio);
+      
+      console.log(`[FINANCIERO] Processed financial data successfully`);
+      return processed;
+    });
     
     if (!processedData) {
       throw new Error("No se pudieron procesar los datos");
@@ -74,7 +78,7 @@ const processedData = await getCachedData(cacheKey, async () => {
       success: true,
       data: processedData,
       filters: { tipo, dia, mes, anio },
-cached: true
+      cached: true
     });
   } catch (error) {
     console.error("Error en análisis financiero:", error);
@@ -91,9 +95,17 @@ cached: true
         tendenciaGastos: 'neutral',
         totalPagos: 0,
         promedioGastoDiario: 0,
-        ratioGastosIngresos: 0
+        ratioGastosIngresos: 0,
+        ventasDiarias: {},
+        gastosPorDia: {},
+        categoriasOrdenadas: [],
+        topEmpresas: [],
+        detalleGastos: [],
+        tipoVisualizacion: tipo,
+        profitMensual: [],
+        flujoSemanal: []
       },
-      filters: { tipo: "mes", dia: "", mes: (new Date().getMonth() + 1).toString(), anio: new Date().getFullYear().toString() }
+      filters: { tipo, dia, mes, anio }
     });
   }
 }
@@ -120,6 +132,18 @@ export default function AnalisisFinanciero() {
     formData.append("anio", selectedAnio);
     submit(formData, { method: "get" });
   }, [selectedTipo, selectedDia, selectedMes, selectedAnio, submit]);
+
+  // Efecto para animaciones al cargar la página
+  useEffect(() => {
+    const cards = document.querySelectorAll('.dashboard-card, .polaris-card');
+    cards.forEach((card, index) => {
+      card.style.animationDelay = `${index * 0.1}s`;
+      card.classList.add('animate__animated', 'animate__fadeInUp');
+    });
+    if (typeof window !== 'undefined' && window.NProgress) {
+      window.NProgress.configure({ showSpinner: false, trickleSpeed: 200 });
+    }
+  }, [data]);
 
   if (!success) {
     return (
@@ -230,99 +254,75 @@ export default function AnalisisFinanciero() {
         
         {/* Métricas principales */}
 <InlineGrid columns={{ xs: 1, sm: 2, md: 2, lg: 4 }} gap="400">
-  <Card>
-    <BlockStack gap="200">
-      <Text as="h3" variant="headingMd" tone="subdued">
-        💵 Total Ingresos
-      </Text>
-      <Text as="p" variant="heading2xl" tone="success">
-        Q {data.totalIngresos ? data.totalIngresos.toFixed(2) : '0.00'}
-      </Text>
-      <Text as="p" variant="bodySm" tone="subdued">
-        Ventas del período
-      </Text>
-    </BlockStack>
-  </Card>
+  <MetricCard
+    title="Total Ingresos"
+    value={`Q ${data.totalIngresos ? data.totalIngresos.toFixed(2) : '0.00'}`}
+    icon="💵"
+    format="currency"
+    delay={1}
+    subtitle="Ventas del período"
+  />
 
-  <Card>
-    <BlockStack gap="200">
-      <Text as="h3" variant="headingMd" tone="subdued">
-        💸 Total Egresos
-      </Text>
-      <Text as="p" variant="heading2xl" tone="critical">
-        Q {data.totalEgresos ? data.totalEgresos.toFixed(2) : '0.00'}
-      </Text>
-      <Text as="p" variant="bodySm" tone="subdued">
-        {data.totalPagos || 0} pagos realizados
-      </Text>
-    </BlockStack>
-  </Card>
+  <MetricCard
+    title="Total Egresos"
+    value={`Q ${data.totalEgresos ? data.totalEgresos.toFixed(2) : '0.00'}`}
+    icon="💸"
+    format="currency"
+    delay={2}
+    subtitle={`${data.totalPagos || 0} pagos realizados`}
+  />
 
-  <Card>
-    <BlockStack gap="200">
-      <Text as="h3" variant="headingMd" tone="subdued">
-        📊 Profit
-      </Text>
-      <Text as="p" variant="heading2xl" tone={data.profit >= 0 ? "success" : "critical"}>
-        Q {data.profit ? data.profit.toFixed(2) : '0.00'}
-      </Text>
-      <Badge tone={data.profit >= 0 ? "success" : "critical"}>
-        {data.margenProfit ? data.margenProfit.toFixed(1) : '0.0'}% margen
-      </Badge>
-    </BlockStack>
-  </Card>
+  <MetricCard
+    title="Profit"
+    value={`Q ${data.profit ? data.profit.toFixed(2) : '0.00'}`}
+    icon="📊"
+    format="currency"
+    delay={3}
+    tone={data.profit >= 0 ? "success" : "critical"}
+    subtitle={`${data.margenProfit ? data.margenProfit.toFixed(1) : '0.0'}% margen`}
+  />
 
-  <Card>
-    <BlockStack gap="200">
-      <Text as="h3" variant="headingMd" tone="subdued">
-        📈 Ratio Gastos/Ingresos
-      </Text>
-      <Text as="p" variant="heading2xl" tone={data.ratioGastosIngresos <= 70 ? "success" : data.ratioGastosIngresos <= 85 ? "warning" : "critical"}>
-        {data.ratioGastosIngresos ? data.ratioGastosIngresos.toFixed(1) : '0.0'}%
-      </Text>
-      <Text as="p" variant="bodySm" tone="subdued">
-        {data.ratioGastosIngresos <= 70 ? "Saludable" : data.ratioGastosIngresos <= 85 ? "Aceptable" : "Alto"}
-      </Text>
-    </BlockStack>
-  </Card>
+  <MetricCard
+    title="Ratio Gastos/Ingresos"
+    value={`${data.ratioGastosIngresos ? data.ratioGastosIngresos.toFixed(1) : '0.0'}%`}
+    icon="📈"
+    format="percentage"
+    delay={4}
+    tone={data.ratioGastosIngresos <= 70 ? "success" : data.ratioGastosIngresos <= 85 ? "warning" : "critical"}
+    subtitle={data.ratioGastosIngresos <= 70 ? "Saludable" : data.ratioGastosIngresos <= 85 ? "Aceptable" : "Alto"}
+  />
 </InlineGrid>
 
 {/* Segunda fila de métricas */}
 <InlineGrid columns={{ xs: 1, sm: 2, md: 3 }} gap="400">
-  <Card>
-    <BlockStack gap="200">
-      <Text as="h3" variant="headingMd" tone="subdued">
-        💰 Promedio Gasto Diario
-      </Text>
-      <Text as="p" variant="headingXl">
-        Q {data.promedioGastoDiario ? data.promedioGastoDiario.toFixed(2) : '0.00'}
-      </Text>
-    </BlockStack>
-  </Card>
+  <MetricCard
+    title="Promedio Gasto Diario"
+    value={`Q ${data.promedioGastoDiario ? data.promedioGastoDiario.toFixed(2) : '0.00'}`}
+    icon="💰"
+    format="currency"
+    delay={5}
+  />
+
+  <MetricCard
+    title="Total Transacciones"
+    value={data.totalPagos || 0}
+    icon="📋"
+    format="number"
+    delay={6}
+  />
 
   <Card>
-    <BlockStack gap="200">
-      <Text as="h3" variant="headingMd" tone="subdued">
-        📋 Total Transacciones
-      </Text>
-      <Text as="p" variant="headingXl">
-        {data.totalPagos || 0}
-      </Text>
-    </BlockStack>
-  </Card>
-
-  <Card>
-    <BlockStack gap="200">
-      <Text as="h3" variant="headingMd" tone="subdued">
-        📈 Tendencia de Gastos
-      </Text>
-      <Badge tone={data.tendenciaGastos === 'down' ? 'success' : data.tendenciaGastos === 'up' ? 'warning' : 'info'}>
-        {data.tendenciaGastos === 'up' && '↑ Al alza'}
-        {data.tendenciaGastos === 'down' && '↓ A la baja'}
-        {data.tendenciaGastos === 'neutral' && '→ Estable'}
-      </Badge>
-    </BlockStack>
-  </Card>
+  <BlockStack gap="200">
+    <Text as="h3" variant="headingMd" tone="subdued">
+      📈 Tendencia de Gastos
+    </Text>
+    <Badge size="large" tone={data.tendenciaGastos === 'down' ? 'success' : data.tendenciaGastos === 'up' ? 'warning' : 'info'}>
+      {data.tendenciaGastos === 'up' && '↑ Al alza'}
+      {data.tendenciaGastos === 'down' && '↓ A la baja'}
+      {data.tendenciaGastos === 'neutral' && '→ Estable'}
+    </Badge>
+  </BlockStack>
+</Card>
 </InlineGrid>
 
         {/* Gráfica principal de comparación */}
@@ -365,6 +365,28 @@ export default function AnalisisFinanciero() {
 {data.detalleGastos && data.detalleGastos.length > 0 && (
   <TablaDetalleGastos detalleGastos={data.detalleGastos} />
 )}
+
+{/* Nueva fila de gráficas avanzadas */}
+<InlineGrid 
+  columns={{
+    xs: 1,
+    sm: 1,
+    md: 2
+  }} 
+  gap={{
+    xs: "300",
+    sm: "400",
+    md: "400"
+  }}
+>
+  {data.profitMensual && data.profitMensual.length > 0 && (
+    <TendenciaProfitChart profitMensual={data.profitMensual} />
+  )}
+  
+  {data.flujoSemanal && data.flujoSemanal.length > 0 && (
+    <FlujoCajaChart flujoSemanal={data.flujoSemanal} />
+  )}
+</InlineGrid>
 
 {/* Resumen y recomendaciones */}
 <Card>

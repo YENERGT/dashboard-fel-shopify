@@ -1,3 +1,4 @@
+import appStyles from "../styles/app.css?url";
 import { Link, Outlet, useLoaderData, useRouteError } from "@remix-run/react";
 import { boundary } from "@shopify/shopify-app-remix/server";
 import { AppProvider } from "@shopify/shopify-app-remix/react";
@@ -9,7 +10,10 @@ import { LoadingScreen } from "../components/LoadingScreen";
 import { Suspense } from "react";
 import { Box } from "@shopify/polaris";
 
-export const links = () => [{ rel: "stylesheet", href: polarisStyles }];
+export const links = () => [
+  { rel: "stylesheet", href: polarisStyles },
+  { rel: "stylesheet", href: appStyles }  // Agregar esta línea
+];
 
 export const loader = async ({ request }) => {
   await authenticate.admin(request);

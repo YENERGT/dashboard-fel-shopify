@@ -1,0 +1,76 @@
+/* Mejoras visuales para gráficos */
+.chart-container {
+  position: relative;
+  transition: transform 0.3s ease;
+}
+
+.chart-container:hover {
+  transform: translateY(-2px);
+}
+
+/* Animación de carga para gráficos */
+@keyframes chartFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Mejoras para tablas */
+.Polaris-DataTable__Table tbody tr:hover {
+  background-color: rgba(0, 128, 96, 0.05);
+  transition: background-color 0.2s ease;
+}
+
+/* Sombras suaves para cards */
+.Polaris-Card {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.3s ease;
+}
+
+.Polaris-Card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Mejoras para badges */
+.Polaris-Badge {
+  transition: transform 0.2s ease;
+}
+
+.Polaris-Badge:hover {
+  transform: scale(1.05);
+}
+
+/* Estilos para ChartWrapper */
+.chart-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.chart-container.chart-visible {
+  animation: chartPulse 0.5s ease-out forwards;
+}
+
+@keyframes chartPulse {
+  0% {
+    transform: scale(0.95);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Efecto hover opcional */
+.chart-container:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}

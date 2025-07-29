@@ -3,7 +3,7 @@
 client_id = "b2d5ea5ddbaab057463bfe9c404586d5"
 name = "Dashboard FEL"
 handle = "dashboard-fel"
-application_url = "https://extensions-symposium-senator-qld.trycloudflare.com"
+application_url = "https://concepts-cc-suspension-packages.trycloudflare.com"
 embedded = true
 
 [build]
@@ -26,7 +26,7 @@ api_version = "2025-07"
 scopes = "read_products,read_orders,read_customers,read_reports"
 
 [auth]
-redirect_urls = ["https://extensions-symposium-senator-qld.trycloudflare.com/auth/callback", "https://extensions-symposium-senator-qld.trycloudflare.com/auth/shopify/callback", "https://extensions-symposium-senator-qld.trycloudflare.com/api/auth/callback"]
+redirect_urls = ["https://concepts-cc-suspension-packages.trycloudflare.com/auth/callback", "https://concepts-cc-suspension-packages.trycloudflare.com/auth/shopify/callback", "https://concepts-cc-suspension-packages.trycloudflare.com/api/auth/callback"]
 
 [pos]
 embedded = false

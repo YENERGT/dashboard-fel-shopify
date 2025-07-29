@@ -38,10 +38,17 @@ export const chartColors = {
 
 // Crear gradientes
 export const createGradient = (ctx, chartArea, colors) => {
-  const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
-  gradient.addColorStop(0, colors[1]);
-  gradient.addColorStop(1, colors[0]);
-  return gradient;
+  if (!ctx || !chartArea || !colors) return null;
+  
+  try {
+    const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+    gradient.addColorStop(0, colors[1]);
+    gradient.addColorStop(1, colors[0]);
+    return gradient;
+  } catch (error) {
+    console.warn('Error creating gradient:', error);
+    return colors[0]; // Fallback to solid color
+  }
 };
 
 // Configuración base mejorada
@@ -71,23 +78,34 @@ export const baseChartOptions = {
           family: "'Inter', sans-serif"
         },
         generateLabels: function(chart) {
-          const data = chart.data;
-          if (data.labels && data.datasets) {
-            return data.labels.map((label, i) => {
-              const dataset = data.datasets[0];
-              const value = dataset.data[i];
-              const total = dataset.data.reduce((a, b) => a + b, 0);
-              const percentage = ((value / total) * 100).toFixed(1);
-              
-              return {
-                text: `${label}: ${percentage}%`,
-                fillStyle: dataset.backgroundColor[i],
-                strokeStyle: dataset.borderColor ? dataset.borderColor[i] : undefined,
-                lineWidth: 2,
-                hidden: false,
-                index: i
-              };
-            });
+          try {
+            const data = chart.data;
+            if (data.labels && data.datasets && data.datasets.length > 0) {
+              return data.labels.map((label, i) => {
+                const dataset = data.datasets[0];
+                const value = dataset.data?.[i] || 0;
+                const validData = dataset.data?.filter(v => v != null && !isNaN(v)) || [];
+                const total = validData.reduce((a, b) => (a || 0) + (b || 0), 0);
+                const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0';
+                
+                return {
+                  text: `${label}: ${percentage}%`,
+                  fillStyle: Array.isArray(dataset.backgroundColor) 
+                    ? dataset.backgroundColor[i] 
+                    : dataset.backgroundColor,
+                  strokeStyle: dataset.borderColor 
+                    ? (Array.isArray(dataset.borderColor) 
+                      ? dataset.borderColor[i] 
+                      : dataset.borderColor)
+                    : undefined,
+                  lineWidth: 2,
+                  hidden: false,
+                  index: i
+                };
+              });
+            }
+          } catch (error) {
+            console.warn('Error generating labels:', error);
           }
           return [];
         }
@@ -131,15 +149,33 @@ export const chartAnimations = {
     },
     y: {
       duration: 2000,
-      from: (ctx) => ctx.chart.height,
-      to: (ctx) => ctx.raw.y,
+      from: (ctx) => {
+        try {
+          return ctx.chart.height;
+        } catch {
+          return 0;
+        }
+      },
+      to: (ctx) => {
+        try {
+          return ctx.parsed?.y ?? ctx.raw?.y ?? 0;
+        } catch {
+          return 0;
+        }
+      },
       easing: 'easeOutElastic'
     }
   },
   bar: {
     y: {
       duration: 1500,
-      from: (ctx) => ctx.chart.scales.y.getPixelForValue(0),
+      from: (ctx) => {
+        try {
+          return ctx.chart.scales.y.getPixelForValue(0);
+        } catch {
+          return 0;
+        }
+      },
       easing: 'easeOutBounce'
     }
   },
