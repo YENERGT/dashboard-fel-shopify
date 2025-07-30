@@ -148,51 +148,57 @@ export function VentasChart({ ventasDiarias, ventasDiariasAnterior, tipo }) {
     ...baseChartOptions,
     ...chartAnimations.line,
     plugins: {
-      ...baseChartOptions.plugins,
-      title: {
-        display: false
+  ...baseChartOptions.plugins,
+  legend: {
+    display: true,  // ✅ Asegurar que esté visible
+    position: 'top',
+    labels: {
+      usePointStyle: true,
+      padding: 20,
+      font: {
+        size: 12,
+        family: "'Inter', sans-serif"
       },
-      tooltip: {
-        ...baseChartOptions.plugins.tooltip,
-        callbacks: {
-          title: function(tooltipItems) {
-            return tooltipItems[0].label;
-          },
-          label: function(context) {
-            let label = context.dataset.label || '';
-            if (label) {
-              label += ': ';
-            }
-            if (context.parsed.y !== null) {
-              label += `Q ${context.parsed.y.toLocaleString('es-GT', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-              })}`;
-            }
-            
-            // Agregar cambio porcentual si es comparación
-            if (context.datasetIndex === 0 && datosPeriodoAnterior[context.dataIndex]) {
-              const actual = context.parsed.y;
-              const anterior = datosPeriodoAnterior[context.dataIndex];
-              const cambio = ((actual - anterior) / anterior * 100).toFixed(1);
-              label += ` (${cambio > 0 ? '+' : ''}${cambio}%)`;
-            }
-            
-            return label;
-          },
-          footer: function(tooltipItems) {
-            let sum = 0;
-            tooltipItems.forEach(function(tooltipItem) {
-              sum += tooltipItem.parsed.y;
-            });
-            return 'Total: Q ' + sum.toLocaleString('es-GT', {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2
-            });
-          }
+      boxWidth: 40,
+      boxHeight: 2
+    }
+  },
+  title: {
+    display: false
+  },
+  tooltip: {
+    ...baseChartOptions.plugins.tooltip,
+    callbacks: {
+      title: function(tooltipItems) {
+        return tooltipItems[0].label;
+      },
+      label: function(context) {
+        let label = context.dataset.label || '';
+        if (label) {
+          label += ': ';
         }
+        if (context.parsed.y !== null) {
+          label += `Q ${context.parsed.y.toLocaleString('es-GT', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+          })}`;
+        }
+        
+        return label;
+      },
+      footer: function(tooltipItems) {
+        let sum = 0;
+        tooltipItems.forEach(function(tooltipItem) {
+          sum += tooltipItem.parsed.y;
+        });
+        return 'Total: Q ' + sum.toLocaleString('es-GT', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        });
       }
-    },
+    }
+  }
+},
     scales: {
       y: {
         beginAtZero: true,

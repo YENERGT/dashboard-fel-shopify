@@ -255,32 +255,34 @@ export default function AnalisisFinanciero() {
         {/* Métricas principales */}
 <InlineGrid columns={{ xs: 1, sm: 2, md: 2, lg: 4 }} gap="400">
   <MetricCard
-    title="Total Ingresos"
-    value={`Q ${data.totalIngresos ? data.totalIngresos.toFixed(2) : '0.00'}`}
-    icon="💵"
-    format="currency"
-    delay={1}
-    subtitle="Ventas del período"
-  />
+  title="Total Ingresos"
+  value={`Q ${data.totalIngresos ? data.totalIngresos.toFixed(2) : '0.00'}`}
+  icon="💵"
+  format="currency"
+  delay={1}
+  tone="success"  // ✅ Verde
+  subtitle="Ventas del período"
+/>
 
-  <MetricCard
-    title="Total Egresos"
-    value={`Q ${data.totalEgresos ? data.totalEgresos.toFixed(2) : '0.00'}`}
-    icon="💸"
-    format="currency"
-    delay={2}
-    subtitle={`${data.totalPagos || 0} pagos realizados`}
-  />
+<MetricCard
+  title="Total Egresos"
+  value={`Q ${data.totalEgresos ? data.totalEgresos.toFixed(2) : '0.00'}`}
+  icon="💸"
+  format="currency"
+  delay={2}
+  tone="critical"  // ✅ Rojo
+  subtitle={`${data.totalPagos || 0} pagos realizados`}
+/>
 
-  <MetricCard
-    title="Profit"
-    value={`Q ${data.profit ? data.profit.toFixed(2) : '0.00'}`}
-    icon="📊"
-    format="currency"
-    delay={3}
-    tone={data.profit >= 0 ? "success" : "critical"}
-    subtitle={`${data.margenProfit ? data.margenProfit.toFixed(1) : '0.0'}% margen`}
-  />
+<MetricCard
+  title="Profit"
+  value={`Q ${data.profit ? data.profit.toFixed(2) : '0.00'}`}
+  icon="📊"
+  format="currency"
+  delay={3}
+  tone={data.profit >= 0 ? "success" : "critical"}  // ✅ Verde si positivo, Rojo si negativo
+  subtitle={`${data.margenProfit ? data.margenProfit.toFixed(1) : '0.0'}% margen`}
+/>
 
   <MetricCard
     title="Ratio Gastos/Ingresos"
@@ -296,12 +298,13 @@ export default function AnalisisFinanciero() {
 {/* Segunda fila de métricas */}
 <InlineGrid columns={{ xs: 1, sm: 2, md: 3 }} gap="400">
   <MetricCard
-    title="Promedio Gasto Diario"
-    value={`Q ${data.promedioGastoDiario ? data.promedioGastoDiario.toFixed(2) : '0.00'}`}
-    icon="💰"
-    format="currency"
-    delay={5}
-  />
+  title="Promedio Gasto Diario"
+  value={`Q ${data.promedioGastoDiario ? data.promedioGastoDiario.toFixed(2) : '0.00'}`}
+  icon="💰"
+  format="currency"
+  delay={5}
+  tone="critical"  // ✅ Rojo
+/>
 
   <MetricCard
     title="Total Transacciones"
