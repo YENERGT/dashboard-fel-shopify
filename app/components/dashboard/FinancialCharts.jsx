@@ -491,8 +491,12 @@ export function TopEmpresasGastosChart({ topEmpresas = [] }) {
         label: 'Gasto Total',
         data: topEmpresas.map(e => e.total),
         backgroundColor: (context) => {
-  const value = context.parsed?.x || 0;  // Agregar validación
-  const alpha = maxValue > 0 ? value / maxValue : 0;  // Evitar división por cero
+  // Validar que context.parsed existe
+  if (!context || !context.parsed) {
+    return 'rgba(239, 68, 68, 0.5)'; // Color por defecto
+  }
+  const value = context.parsed.x || 0;
+  const alpha = maxValue > 0 ? value / maxValue : 0;
   return `rgba(239, 68, 68, ${0.3 + (alpha * 0.5)})`;
 },
         borderColor: chartColors.danger.main,
@@ -702,18 +706,27 @@ export function TendenciaProfitChart({ profitMensual = [] }) {
         label: 'Profit Mensual',
         data: profitMensual,
         borderColor: (context) => {
-  const value = context.parsed?.y || 0;  // Agregar validación
+  // Validar que context.parsed existe
+  if (!context || !context.parsed) {
+    return chartColors.secondary.main; // Color por defecto
+  }
+  const value = context.parsed.y || 0;
   return value >= 0 ? chartColors.success.main : chartColors.danger.main;
 },
         backgroundColor: (context) => {
-          const chart = context.chart;
-          const {ctx, chartArea} = chart;
-          if (!chartArea) return null;
-          
-          const value = context.parsed.y;
-          const gradient = value >= 0 ? chartColors.success.gradient : chartColors.danger.gradient;
-          return createGradient(ctx, chartArea, gradient);
-        },
+  const chart = context.chart;
+  const {ctx, chartArea} = chart;
+  if (!chartArea) return null;
+  
+  // Validar que context.parsed existe
+  if (!context || !context.parsed || context.parsed.y === undefined) {
+    return createGradient(ctx, chartArea, chartColors.secondary.gradient);
+  }
+  
+  const value = context.parsed.y;
+  const gradient = value >= 0 ? chartColors.success.gradient : chartColors.danger.gradient;
+  return createGradient(ctx, chartArea, gradient);
+},
         borderWidth: 3,
         tension: 0.4,
         fill: 'origin',
@@ -722,14 +735,18 @@ export function TendenciaProfitChart({ profitMensual = [] }) {
         pointBackgroundColor: '#fff',
         pointBorderWidth: 3,
         segment: {
-          borderColor: (ctx) => {
-            const prev = ctx.p0.parsed.y;
-            const curr = ctx.p1.parsed.y;
-            if (prev < 0 && curr >= 0) return chartColors.success.main;
-            if (prev >= 0 && curr < 0) return chartColors.danger.main;
-            return curr >= 0 ? chartColors.success.main : chartColors.danger.main;
-          }
-        }
+  borderColor: (ctx) => {
+    // Validar que los puntos existen
+    if (!ctx || !ctx.p0 || !ctx.p1 || !ctx.p0.parsed || !ctx.p1.parsed) {
+      return chartColors.secondary.main;
+    }
+    const prev = ctx.p0.parsed.y || 0;
+    const curr = ctx.p1.parsed.y || 0;
+    if (prev < 0 && curr >= 0) return chartColors.success.main;
+    if (prev >= 0 && curr < 0) return chartColors.danger.main;
+    return curr >= 0 ? chartColors.success.main : chartColors.danger.main;
+  }
+}
       },
     ],
   };
