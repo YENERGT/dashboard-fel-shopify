@@ -115,8 +115,8 @@ const totalIngresos = ventasData.totalVentas;
 const profitMensual = [];
 if (tipo === 'año') {
   for (let mes = 1; mes <= 12; mes++) {
-    const ventasMes = ventasData.ventasDiarias?.[mes] || 0;  // ✅ Usar ventasData.ventasDiarias
-    const gastosMes = gastosPorMes[mes] || 0;  // ✅ También cambiar a gastosPorMes
+    const ventasMes = ventasData.ventasDiarias?.[mes] || 0;
+    const gastosMes = gastosPorMes[mes] || 0;  // Cambiar a gastosPorMes
     profitMensual.push(ventasMes - gastosMes);
   }
 }
@@ -133,7 +133,7 @@ if (tipo === 'mes') {
     let salidas = 0;
     
     for (let dia = inicioSemana; dia <= finSemana; dia++) {
-      entradas += ventasData.ventasDiarias?.[dia] || 0;  // ✅ Usar ventasData.ventasDiarias
+      entradas += ventasData.ventasDiarias?.[dia] || 0;  // Agregar optional chaining
       salidas += gastosPorDia[dia] || 0;
     }
     

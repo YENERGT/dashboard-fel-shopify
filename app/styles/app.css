@@ -74,3 +74,32 @@
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
 }
+
+/* Efecto de máquina de escribir */
+.typed-heading {
+  display: inline-block;
+}
+
+.typed-heading .cursor {
+  display: inline-block;
+  width: 2px;
+  background-color: currentColor;
+  animation: blink 1s infinite;
+  margin-left: 2px;
+  opacity: 1;
+}
+
+@keyframes blink {
+  0%, 49% {
+    opacity: 1;
+  }
+  50%, 100% {
+    opacity: 0;
+  }
+}
+
+/* Animación suave para el texto */
+.typed-heading {
+  letter-spacing: 0.02em;
+  font-feature-settings: "kern" 1;
+}

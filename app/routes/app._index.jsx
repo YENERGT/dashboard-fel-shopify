@@ -1,6 +1,7 @@
 import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { PrefetchLink } from "../components/PrefetchLink";
+import { MetricCard } from "../components/dashboard/MetricCard";
 import {
   Page,
   Layout,
@@ -26,7 +27,7 @@ export const loader = async ({ request }) => {
     const rawData = await getGoogleSheetsData();
     
     // Obtener fecha actual
-    const today = new Date();
+    const today = new Date(new Date().toLocaleString("en-US", {timeZone: "America/Guatemala"}));
     const currentMonth = (today.getMonth() + 1).toString();
     const currentYear = today.getFullYear().toString();
     const currentDay = today.getDate().toString();
@@ -64,10 +65,18 @@ export const loader = async ({ request }) => {
       clientesActivos: clientesUnicosMes.size,
       productosVendidos: productosVendidosMes,
       ciudadesAlcanzadas: ciudadesUnicas.size,
-      pedidosHoy: dataHoy.pedidosAprobados,
-      pedidosMes: dataMes.pedidosAprobados,
-      ticketPromedioHoy: dataHoy.pedidosAprobados > 0 ? `Q ${(dataHoy.totalVentas / dataHoy.pedidosAprobados).toFixed(2)}` : "Q 0.00",
-      ultimaActualizacion: new Date().toLocaleString('es-GT'),
+      pedidosHoy: dataHoy.totalPedidos,
+      pedidosMes: dataMes.totalPedidos,
+      ticketPromedioHoy: dataHoy.totalPedidos > 0 ? `Q ${(dataHoy.totalVentas / dataHoy.totalPedidos).toFixed(2)}` : "Q 0.00",
+      ultimaActualizacion: new Date().toLocaleString('es-GT', {
+  timeZone: 'America/Guatemala',
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+  second: '2-digit'
+}),
     };
     
     return json({
@@ -92,7 +101,15 @@ export const loader = async ({ request }) => {
         pedidosHoy: 0,
         pedidosMes: 0,
         ticketPromedioHoy: "Q 0.00",
-        ultimaActualizacion: new Date().toLocaleString('es-GT'),
+        ultimaActualizacion: new Date().toLocaleString('es-GT', {
+  timeZone: 'America/Guatemala',
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+  second: '2-digit'
+}),
       },
       success: false,
       error: error.message,
@@ -102,37 +119,6 @@ export const loader = async ({ request }) => {
 
 export default function Index() {
   const { currentDate, currentTime, summary, success, error } = useLoaderData();
-
-  const quickStats = [
-    {
-      label: "Ventas Hoy",
-      value: summary.ventasHoy,
-      emoji: "💵",
-      tone: "success",
-      subtext: `${summary.pedidosHoy || 0} pedidos`,
-    },
-    {
-      label: "Ventas del Mes",
-      value: summary.ventasMes,
-      emoji: "📊",
-      tone: "info",
-      subtext: `${summary.pedidosMes || 0} pedidos`,
-    },
-    {
-      label: "Clientes Activos",
-      value: summary.clientesActivos,
-      emoji: "👥",
-      tone: "attention",
-      subtext: "Este mes",
-    },
-    {
-      label: "Productos Vendidos",
-      value: summary.productosVendidos,
-      emoji: "📦",
-      tone: "magic",
-      subtext: "Este mes",
-    },
-  ];
 
   const navigationCards = [
     {
@@ -204,54 +190,65 @@ export default function Index() {
             </InlineStack>
             
             <InlineGrid columns={{ xs: 1, sm: 2, md: 4 }} gap="400">
-              {quickStats.map((stat, index) => (
-                <Card key={index} sectioned>
-                  <BlockStack gap="200">
-                    <InlineStack align="space-between">
-                      <Text as="h3" variant="headingXl">
-                        {stat.emoji}
-                      </Text>
-                      <Badge tone={stat.tone}>{stat.label}</Badge>
-                    </InlineStack>
-                    <Text as="p" variant="heading2xl" fontWeight="bold">
-                      {stat.value}
-                    </Text>
-                    {stat.subtext && (
-                      <Text as="p" variant="bodySm" tone="subdued">
-                        {stat.subtext}
-                      </Text>
-                    )}
-                  </BlockStack>
-                </Card>
-              ))}
+              <MetricCard
+                title="Ventas Hoy"
+                value={summary.ventasHoy}
+                icon="💵"
+                format="currency"
+                delay={1}
+                subtitle={`${summary.pedidosHoy || 0} pedidos`}
+                tone="success"
+              />
+              
+              <MetricCard
+                title="Ventas del Mes"
+                value={summary.ventasMes}
+                icon="📊"
+                format="currency"
+                delay={2}
+                subtitle={`${summary.pedidosMes || 0} pedidos`}
+                tone="info"
+              />
+              
+              <MetricCard
+                title="Clientes Activos"
+                value={summary.clientesActivos}
+                icon="👥"
+                format="number"
+                delay={3}
+                subtitle="Este mes"
+                tone="attention"
+              />
+              
+              <MetricCard
+                title="Productos Vendidos"
+                value={summary.productosVendidos}
+                icon="📦"
+                format="number"
+                delay={4}
+                subtitle="Este mes"
+                tone="magic"
+              />
             </InlineGrid>
             
             {/* Estadísticas adicionales */}
             <InlineGrid columns={{ xs: 1, sm: 2, md: 3 }} gap="400">
-              <Card sectioned>
-                <BlockStack gap="200">
-                  <Text as="h4" variant="headingMd">
-                    🎯 Ticket Promedio Hoy
-                  </Text>
-                  <Text as="p" variant="headingLg" fontWeight="bold">
-                    {summary.ticketPromedioHoy}
-                  </Text>
-                </BlockStack>
-              </Card>
+              <MetricCard
+                title="Ticket Promedio Hoy"
+                value={summary.ticketPromedioHoy}
+                icon="🎯"
+                format="currency"
+                delay={5}
+              />
               
-              <Card sectioned>
-                <BlockStack gap="200">
-                  <Text as="h4" variant="headingMd">
-                    🏙️ Ciudades Alcanzadas
-                  </Text>
-                  <Text as="p" variant="headingLg" fontWeight="bold">
-                    {summary.ciudadesAlcanzadas}
-                  </Text>
-                  <Text as="p" variant="bodySm" tone="subdued">
-                    Este año
-                  </Text>
-                </BlockStack>
-              </Card>
+              <MetricCard
+                title="Ciudades Alcanzadas"
+                value={summary.ciudadesAlcanzadas}
+                icon="🏙️"
+                format="number"
+                delay={6}
+                subtitle="Este año"
+              />
               
               <Card sectioned>
                 <BlockStack gap="200">
@@ -292,10 +289,10 @@ export default function Index() {
                   </Text>
                   
                   <PrefetchLink to={card.link} style={{ textDecoration: 'none' }}>
-  <Button fullWidth primary={card.buttonPrimary}>
-    {card.buttonText}
-  </Button>
-</PrefetchLink>
+                    <Button fullWidth primary={card.buttonPrimary}>
+                      {card.buttonText}
+                    </Button>
+                  </PrefetchLink>
                 </BlockStack>
               </Card>
             ))}
