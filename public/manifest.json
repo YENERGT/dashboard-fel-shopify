@@ -1,0 +1,47 @@
+{
+  "name": "Dashboard FEL",
+  "short_name": "Dashboard FEL",
+  "description": "Dashboard de análisis de facturas electrónicas para Shopify",
+  "start_url": "/app",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#008060",
+  "orientation": "portrait-primary",
+  "categories": ["business", "productivity", "finance"],
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png", 
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "Ver dashboard principal",
+      "url": "/app/dashboard",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Análisis Financiero",
+      "short_name": "Financiero", 
+      "description": "Ver análisis financiero",
+      "url": "/app/analisis-financiero",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ],
+  "protocol_handlers": [
+    {
+      "protocol": "web+dashboard",
+      "url": "/app?action=%s"
+    }
+  ]
+}

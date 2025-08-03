@@ -1,9 +1,12 @@
 import { EnhancedDataTable } from "../components/dashboard/EnhancedDataTable";
+import { OptimizedDataTable } from "../components/dashboard/OptimizedDataTable";
 import { MetricCard } from "../components/dashboard/MetricCard";
+import { MemoizedVentasChart, MemoizedMetricCard } from "../components/dashboard/MemoizedCharts";
+import { LazyChart } from "../components/charts/LazyChart";
 import { json } from "@remix-run/node";
 import { exportToCSV } from "../utils/exportData";
 import { useLoaderData, useSubmit, useNavigation } from "@remix-run/react";
-import { getCachedData, invalidateCache } from "../utils/cache.server";
+import { getCachedData, invalidateCache, prewarmCriticalData } from "../utils/cache.server.optimized";
 import {
   Page,
   Layout,
@@ -18,9 +21,10 @@ import {
   Badge,
   Divider,
 } from "@shopify/polaris";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo, Suspense } from "react";
 import { getGoogleSheetsData } from "../utils/googleSheets.server";
 import { processSheetData } from "../utils/processData.server";
+import { usePerformanceMonitor, useLazyLoading } from "../hooks/performance";
 import { 
   VentasChart,          // ✅ Correcto (antes era VentasPorDiaChart)
   HorasChart,           // ✅ Correcto (antes era VentasPorHoraChart)
@@ -36,6 +40,9 @@ import {
 
 export async function loader({ request }) {
   try {
+    // Prewarm critical data en background
+    prewarmCriticalData().catch(console.warn);
+    
     const url = new URL(request.url);
     const tipo = url.searchParams.get("tipo") || "mes";
     const dia = url.searchParams.get("dia") || "";
@@ -84,6 +91,9 @@ export default function Dashboard() {
   const submit = useSubmit();
   const navigation = useNavigation();
   
+  // Performance monitoring
+  usePerformanceMonitor('Dashboard');
+  
   const [selectedTipo, setSelectedTipo] = useState(filters?.tipo || "mes");
   const [selectedDia, setSelectedDia] = useState(filters?.dia || "");
   const [selectedMes, setSelectedMes] = useState(filters?.mes || (new Date().getMonth() + 1).toString());
@@ -93,6 +103,45 @@ export default function Dashboard() {
   const handleDiaChange = useCallback((value) => setSelectedDia(value), []);
   const handleMesChange = useCallback((value) => setSelectedMes(value), []);
   const handleAnioChange = useCallback((value) => setSelectedAnio(value), []);
+
+  // Memoización de opciones estáticas
+  const tipoOptions = useMemo(() => [
+    { label: "Por Mes", value: "mes" },
+    { label: "Por Día", value: "dia" },
+    { label: "Por Año", value: "año" },
+  ], []);
+
+  const diaOptions = useMemo(() => [
+    { label: "Seleccione día", value: "" },
+    ...Array.from({ length: 31 }, (_, i) => ({
+      label: (i + 1).toString(),
+      value: (i + 1).toString(),
+    })),
+  ], []);
+
+  const mesOptions = useMemo(() => [
+    { label: "Enero", value: "1" },
+    { label: "Febrero", value: "2" },
+    { label: "Marzo", value: "3" },
+    { label: "Abril", value: "4" },
+    { label: "Mayo", value: "5" },
+    { label: "Junio", value: "6" },
+    { label: "Julio", value: "7" },
+    { label: "Agosto", value: "8" },
+    { label: "Septiembre", value: "9" },
+    { label: "Octubre", value: "10" },
+    { label: "Noviembre", value: "11" },
+    { label: "Diciembre", value: "12" },
+  ], []);
+
+  const anioOptions = useMemo(() => Array.from({ length: 11 }, (_, i) => ({
+    label: (2030 - i).toString(),
+    value: (2030 - i).toString(),
+  })), []);
+
+  // Lazy loading refs para secciones
+  const [chartsRef, chartsVisible] = useLazyLoading(0.1, '100px');
+  const [tablesRef, tablesVisible] = useLazyLoading(0.1, '100px');
 
   // Efecto para animaciones
   useEffect(() => {
@@ -151,40 +200,6 @@ export default function Dashboard() {
       </Page>
     );
   }
-
-  const tipoOptions = [
-    { label: "Por Mes", value: "mes" },
-    { label: "Por Día", value: "dia" },
-    { label: "Por Año", value: "año" },
-  ];
-
-  const diaOptions = [
-    { label: "Seleccione día", value: "" },
-    ...Array.from({ length: 31 }, (_, i) => ({
-      label: (i + 1).toString(),
-      value: (i + 1).toString(),
-    })),
-  ];
-
-  const mesOptions = [
-    { label: "Enero", value: "1" },
-    { label: "Febrero", value: "2" },
-    { label: "Marzo", value: "3" },
-    { label: "Abril", value: "4" },
-    { label: "Mayo", value: "5" },
-    { label: "Junio", value: "6" },
-    { label: "Julio", value: "7" },
-    { label: "Agosto", value: "8" },
-    { label: "Septiembre", value: "9" },
-    { label: "Octubre", value: "10" },
-    { label: "Noviembre", value: "11" },
-    { label: "Diciembre", value: "12" },
-  ];
-
-  const anioOptions = Array.from({ length: 11 }, (_, i) => ({
-    label: (2030 - i).toString(),
-    value: (2030 - i).toString(),
-  }));
 
   return (
     <Page title="Dashboard FEL" fullWidth>

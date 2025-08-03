@@ -1,0 +1,270 @@
+/* Optimizaciones CSS avanzadas */
+
+/* Variables CSS para mejor performance */
+:root {
+  /* Colores con mejor contraste */
+  --color-primary-optimized: #008060;
+  --color-primary-hover: #007550;
+  --color-primary-light: rgba(0, 128, 96, 0.1);
+  
+  /* Sombras optimizadas */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  
+  /* Transiciones standarizadas */
+  --transition-fast: 150ms ease-out;
+  --transition-normal: 250ms ease-out;
+  --transition-slow: 350ms ease-out;
+  
+  /* Z-index scale */
+  --z-dropdown: 1000;
+  --z-sticky: 1020;
+  --z-fixed: 1030;
+  --z-modal-backdrop: 1040;
+  --z-modal: 1050;
+  --z-popover: 1060;
+  --z-tooltip: 1070;
+}
+
+/* Optimización de animaciones con will-change */
+.chart-container,
+.metric-card,
+.enhanced-data-table {
+  will-change: transform, opacity;
+}
+
+/* Animaciones optimizadas para 60fps */
+@keyframes slideInUp {
+  from {
+    transform: translate3d(0, 30px, 0);
+    opacity: 0;
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Clases para animaciones optimizadas */
+.animate-slide-up {
+  animation: slideInUp var(--transition-normal) ease-out forwards;
+}
+
+.animate-fade-in {
+  animation: fadeIn var(--transition-fast) ease-out forwards;
+}
+
+.animate-scale-in {
+  animation: scaleIn var(--transition-normal) ease-out forwards;
+}
+
+/* Optimización de transformaciones */
+.transform-gpu {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* Cards optimizadas */
+.dashboard-card-optimized {
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-5);
+  transition: box-shadow var(--transition-fast), transform var(--transition-fast);
+  transform: translateZ(0); /* GPU acceleration */
+}
+
+.dashboard-card-optimized:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px) translateZ(0);
+}
+
+/* Skeleton loading optimizado */
+.skeleton-optimized {
+  background: linear-gradient(
+    90deg,
+    var(--color-bg-secondary) 25%,
+    var(--color-bg-primary) 50%,
+    var(--color-bg-secondary) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-wave 1.5s infinite ease-in-out;
+}
+
+@keyframes skeleton-wave {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Optimización de scroll */
+.smooth-scroll {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Grid layout optimizado */
+.dashboard-grid {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+@media (min-width: 768px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  }
+}
+
+/* Optimización para charts */
+.chart-wrapper {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  contain: layout style paint;
+}
+
+.chart-visible {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity var(--transition-normal), transform var(--transition-normal);
+}
+
+.chart-hidden {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+/* Optimización de tablas */
+.enhanced-table {
+  contain: layout style;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.enhanced-table table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.enhanced-table th,
+.enhanced-table td {
+  text-align: left;
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+/* Prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Dark mode optimizations */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg-primary: #1a1a1a;
+    --color-bg-surface: #2a2a2a;
+    --color-bg-secondary: #3a3a3a;
+    --color-text-primary: #ffffff;
+    --color-text-secondary: #a1a1aa;
+    --color-border-light: #404040;
+  }
+  
+  .skeleton-optimized {
+    background: linear-gradient(
+      90deg,
+      #2a2a2a 25%,
+      #3a3a3a 50%,
+      #2a2a2a 75%
+    );
+    background-size: 200% 100%;
+  }
+}
+
+/* Print optimizations */
+@media print {
+  .chart-container {
+    break-inside: avoid;
+  }
+  
+  .dashboard-card-optimized {
+    box-shadow: none;
+    border: 1px solid #ccc;
+    margin-bottom: var(--space-4);
+  }
+  
+  .animate-slide-up,
+  .animate-fade-in,
+  .animate-scale-in {
+    animation: none;
+  }
+}
+
+/* Contenedor principal optimizado */
+.main-container {
+  contain: layout style;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Optimización de focus */
+.focus-visible {
+  outline: 2px solid var(--color-primary-optimized);
+  outline-offset: 2px;
+}
+
+/* Utilidades de performance */
+.gpu-accelerated {
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+.no-paint {
+  contain: layout style paint;
+}
+
+.text-optimized {
+  text-rendering: optimizeSpeed;
+  font-smooth: auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}

@@ -73,23 +73,44 @@ body {
 `;
 
 export const links = () => [
-  // Tokens CSS - carga inmediata
+  // Preload crítico - DNS prefetch
+  { rel: "dns-prefetch", href: "//fonts.googleapis.com" },
+  { rel: "dns-prefetch", href: "//fonts.gstatic.com" },
+  { rel: "dns-prefetch", href: "//sheets.googleapis.com" },
+  
+  // Preconnect para recursos críticos
+  { rel: "preconnect", href: "https://fonts.googleapis.com" },
+  { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+  
+  // CSS crítico primero
   { rel: "stylesheet", href: tokensStyles },
-  // Dashboard Enhanced CSS
   { rel: "stylesheet", href: dashboardEnhancedStyles },
-  // Dashboard Final CSS
-  { rel: "stylesheet", href: dashboardFinalStyles },
-  // NProgress para loading bar
-  { rel: "stylesheet", href: "https://unpkg.com/nprogress@0.2.0/nprogress.css" },
-  // Preload crítico
-  { rel: "preload", href: polarisStyles, as: "style" },
-  // CSS no crítico con lazy loading
+  
+  // CSS no crítico con loading optimizado
   { 
-    rel: "stylesheet", 
-    href: polarisStyles,
-    media: "print",
-    onLoad: "this.media='all'"
-  }
+    rel: "preload", 
+    href: polarisStyles, 
+    as: "style",
+    onLoad: "this.onload=null;this.rel='stylesheet'"
+  },
+  { 
+    rel: "preload", 
+    href: dashboardFinalStyles, 
+    as: "style",
+    onLoad: "this.onload=null;this.rel='stylesheet'"
+  },
+  
+  // NProgress con preload
+  { 
+    rel: "preload", 
+    href: "https://unpkg.com/nprogress@0.2.0/nprogress.css",
+    as: "style",
+    onLoad: "this.onload=null;this.rel='stylesheet'"
+  },
+  
+  // Resource hints para navegación
+  { rel: "prefetch", href: "/app/dashboard" },
+  { rel: "prefetch", href: "/app/analisis-financiero" },
 ];
 
 export default function App() {
@@ -98,6 +119,12 @@ export default function App() {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width,initial-scale=1" />
+        
+        {/* PWA Meta tags */}
+        <meta name="theme-color" content="#008060" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <link rel="manifest" href="/manifest.json" />
         
         {/* CSS crítico inline para carga inmediata */}
         <style dangerouslySetInnerHTML={{ __html: criticalCSS }} />
@@ -123,18 +150,78 @@ export default function App() {
         <ScrollRestoration />
         <Scripts />
         
-        {/* Script para cargar CSS no crítico después */}
+        {/* Service Worker Registration */}
         <script dangerouslySetInnerHTML={{
           __html: `
-            // Cargar CSS completo después de load
-            window.addEventListener('load', function() {
-              const links = document.querySelectorAll('link[media="print"]');
-              links.forEach(link => link.media = 'all');
-            });
+            if ('serviceWorker' in navigator) {
+              window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/sw.js')
+                  .then(function(registration) {
+                    console.log('SW registered: ', registration);
+                  })
+                  .catch(function(registrationError) {
+                    console.log('SW registration failed: ', registrationError);
+                  });
+              });
+            }
           `
         }} />
-        {/* Script de NProgress */}
-        <script src="https://unpkg.com/nprogress@0.2.0/nprogress.js"></script>
+        
+        {/* Script optimizado para carga progresiva */}
+        <script dangerouslySetInnerHTML={{
+          __html: `
+            // Critical path optimization
+            (function() {
+              // Preload key resources after DOMContentLoaded
+              document.addEventListener('DOMContentLoaded', function() {
+                // Load non-critical CSS
+                const stylesToLoad = [
+                  '${polarisStyles}',
+                  '${dashboardFinalStyles}',
+                  'https://unpkg.com/nprogress@0.2.0/nprogress.css'
+                ];
+                
+                stylesToLoad.forEach(function(href) {
+                  const link = document.createElement('link');
+                  link.rel = 'stylesheet';
+                  link.href = href;
+                  link.media = 'all';
+                  document.head.appendChild(link);
+                });
+              });
+              
+              // Initialize NProgress early
+              if (typeof NProgress !== 'undefined') {
+                NProgress.configure({ 
+                  showSpinner: false,
+                  trickleSpeed: 200,
+                  minimum: 0.08
+                });
+              }
+              
+              // Performance tracking
+              if ('performance' in window) {
+                window.addEventListener('load', function() {
+                  setTimeout(function() {
+                    const perfData = performance.getEntriesByType('navigation')[0];
+                    if (perfData && console.debug) {
+                      console.debug('Page Load Performance:', {
+                        DOM: Math.round(perfData.domContentLoadedEventEnd - perfData.domContentLoadedEventStart),
+                        Load: Math.round(perfData.loadEventEnd - perfData.loadEventStart),
+                        Total: Math.round(perfData.loadEventEnd - perfData.fetchStart)
+                      });
+                    }
+                  }, 0);
+                });
+              }
+            })();
+          `
+        }} />
+        {/* NProgress script con loading optimizado */}
+        <script 
+          src="https://unpkg.com/nprogress@0.2.0/nprogress.js"
+          defer
+        ></script>
       </body>
     </html>
   );

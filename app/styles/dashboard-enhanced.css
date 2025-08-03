@@ -1,11 +1,8 @@
 /* === DASHBOARD ENHANCED STYLES === */
-/* Importar animaciones de Gentelella */
+/* Importar animaciones */
 @import 'animate.css';
 
-/* Importar integración de Gentelella */
-@import './gentelella-integration.css';
-
-/* Progress bar al estilo Gentelella */
+/* Progress bar personalizado */
 .nprogress-custom-parent {
   overflow: hidden;
   position: relative;
