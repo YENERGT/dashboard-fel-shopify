@@ -271,6 +271,14 @@ export function generateWhatsAppMessage(reportData, tipo, dia, mes, anio) {
     }
   }
   
+  // Agregar sección Profit Completo
+  if (reportData.dataProfitCompleto) {
+    message += `\n*PROFIT COMPLETO*\n`;
+    message += `🛒 Shopify: ${formatNumber(reportData.dataProfitCompleto.totalShopify)}\n`;
+    message += `💸 Egresos: ${formatNumber(reportData.dataProfitCompleto.totalEgresos)}\n`;
+    message += `💰 Profit: ${formatNumber(reportData.dataProfitCompleto.profitTotal)}\n`;
+    message += `📈 Margen: ${reportData.dataProfitCompleto.marginTotal.toFixed(1)}%\n`;
+  }
   message += `\n📱 Reporte completo adjunto en PDF.`;
   
   return message;

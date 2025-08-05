@@ -22,7 +22,7 @@ import { useState, useCallback, useEffect } from "react";
 import { authenticate } from "../shopify.server";
 import { generateHTMLReport } from "../utils/generateReports.server";
 import { sendEmailReport } from "../utils/emailService.server";
-import { sendWhatsAppMessage, validateWhatsAppNumber, generateWhatsAppMessage } from "../utils/whatsappService.server";
+import { sendWhatsAppMessage, validateWhatsAppNumber, generateWhatsAppMessage, generateReportSummary } from "../utils/whatsappService.server";
 import { generatePDFBuffer } from "../utils/pdfGenerator.server";
 
 export async function loader({ request }) {
@@ -34,7 +34,19 @@ export async function loader({ request }) {
 }
 
 export async function action({ request }) {
-  await authenticate.admin(request);
+  // Handle CORS preflight
+  if (request.method === 'OPTIONS') {
+    return new Response(null, {
+      status: 204,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST,OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type'
+      }
+    });
+  }
+  // Authenticate and get Shopify admin API client
+  const { admin } = await authenticate.admin(request);
   
   const formData = await request.formData();
   const data = Object.fromEntries(formData);
@@ -45,6 +57,7 @@ export async function action({ request }) {
       metodoEnvio,
       reportesFEL,
       reportesFinanciero,
+      reportesProfitCompleto,
       tipo,
       dia,
       mes,
@@ -57,10 +70,11 @@ export async function action({ request }) {
     // Convertir strings a booleanos
     const includeFEL = reportesFEL === 'true';
     const includeFinanciero = reportesFinanciero === 'true';
+    const includeProfitCompleto = reportesProfitCompleto === 'true';
     const includeComparison = incluirComparacion === 'true';
     
     // Validar que al menos un reporte esté seleccionado
-    if (!includeFEL && !includeFinanciero) {
+    if (!includeFEL && !includeFinanciero && !includeProfitCompleto) {
       return json({
         success: false,
         error: "Debe seleccionar al menos un tipo de reporte"
@@ -70,12 +84,14 @@ export async function action({ request }) {
     // Generar el reporte HTML
     console.log("Generando reporte...");
     const reportData = await generateHTMLReport({
+      admin,
       tipo,
       dia,
       mes,
       anio,
       reportesFEL: includeFEL,
       reportesFinanciero: includeFinanciero,
+      reportesProfitCompleto: includeProfitCompleto,
       incluirComparacion: includeComparison
     });
     
@@ -97,6 +113,7 @@ export async function action({ request }) {
       const tiposReporte = [];
       if (includeFEL) tiposReporte.push('Dashboard FEL');
       if (includeFinanciero) tiposReporte.push('Análisis Financiero');
+      if (includeProfitCompleto) tiposReporte.push('Profit Completo');
       
       const subject = `Reporte ${tiposReporte.join(' y ')} - ${periodo}`;
       const attachmentName = `reporte-${tipo}-${anio}${mes}${dia || ''}.html`;
@@ -141,8 +158,9 @@ if (metodoEnvio === 'whatsapp') {
   const pdfBuffer = await generatePDFBuffer(reportData.html);
   const pdfName = `reporte-${tipo}-${anio}${mes}${dia || ''}.pdf`;
       
-      // Generar mensaje de texto para WhatsApp
+      // Generar mensaje de texto y resumen para WhatsApp
   const whatsappMessage = generateWhatsAppMessage(reportData, tipo, dia, mes, anio);
+  const reportSummary = generateReportSummary(reportData, tipo, dia, mes, anio);
       
       // Enviar PDF por WhatsApp
   console.log("Enviando WhatsApp con PDF a:", validation.cleaned);
@@ -150,14 +168,16 @@ if (metodoEnvio === 'whatsapp') {
     to: validation.cleaned,
     message: whatsappMessage,
     documentBuffer: pdfBuffer,
-    documentName: pdfName
+    documentName: pdfName,
+    reportSummary
   });
   
   if (!whatsappResult.success) {
-    console.error("Error al enviar WhatsApp:", whatsappResult.error);
+    console.error("Error al enviar WhatsApp:", whatsappResult.error, whatsappResult.details);
     return json({
       success: false,
-      error: whatsappResult.error || 'Error al enviar WhatsApp'
+      error: whatsappResult.error || 'Error al enviar WhatsApp',
+      details: whatsappResult.details || null
     }, { status: 500 });
   }
       
@@ -205,6 +225,7 @@ export default function EnvioReportes() {
   const [metodoEnvio, setMetodoEnvio] = useState("email");
   const [reportesFEL, setReportesFEL] = useState(true);
   const [reportesFinanciero, setReportesFinanciero] = useState(false);
+  const [reportesProfitCompleto, setReportesProfitCompleto] = useState(false);
   const [tipo, setTipo] = useState("mes");
   const [dia, setDia] = useState("");
   const [mes, setMes] = useState((new Date().getMonth() + 1).toString());
@@ -214,37 +235,20 @@ export default function EnvioReportes() {
   const [incluirComparacion, setIncluirComparacion] = useState(true);
   const [mensaje, setMensaje] = useState(null);
 
+  // Desactivar Profit Completo si selecciona vista anual
+  useEffect(() => {
+    if (tipo === 'año' && reportesProfitCompleto) {
+      setReportesProfitCompleto(false);
+    }
+  }, [tipo]);
+
   const handleSubmit = useCallback(() => {
     // Validaciones existentes...
-    if (!reportesFEL && !reportesFinanciero) {
-      setMensaje({ tipo: "warning", texto: "Debe seleccionar al menos un tipo de reporte" });
-      return;
-    }
-    
-    if (metodoEnvio === "email" && !emailDestino) {
-      setMensaje({ tipo: "critical", texto: "Debe ingresar un email de destino" });
-      return;
-    }
-    
-    if (metodoEnvio === "whatsapp" && !numeroWhatsapp) {
-      setMensaje({ tipo: "critical", texto: "Debe ingresar un número de WhatsApp" });
-      return;
-    }
-    
-    if (metodoEnvio === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailDestino)) {
-      setMensaje({ tipo: "critical", texto: "El email ingresado no es válido" });
-      return;
-    }
-    
-    if (metodoEnvio === "whatsapp" && !/^\+\d{10,15}$/.test(numeroWhatsapp)) {
-      setMensaje({ tipo: "critical", texto: "El número debe incluir código de país (ej: +50212345678)" });
-      return;
-    }
-    
     const formData = new FormData();
     formData.append("metodoEnvio", metodoEnvio);
     formData.append("reportesFEL", reportesFEL);
     formData.append("reportesFinanciero", reportesFinanciero);
+    formData.append("reportesProfitCompleto", reportesProfitCompleto);
     formData.append("tipo", tipo);
     formData.append("dia", dia);
     formData.append("mes", mes);
@@ -255,7 +259,7 @@ export default function EnvioReportes() {
     
     setMensaje({ tipo: "info", texto: "Procesando envío..." });
     submit(formData, { method: 'post' });
-  }, [metodoEnvio, reportesFEL, reportesFinanciero, tipo, dia, mes, anio, emailDestino, numeroWhatsapp, incluirComparacion, submit]);
+  }, [metodoEnvio, reportesFEL, reportesFinanciero, reportesProfitCompleto, tipo, dia, mes, anio, emailDestino, numeroWhatsapp, incluirComparacion, submit]);
 
   const tipoOptions = [
     { label: "Por Mes", value: "mes" },
@@ -330,6 +334,18 @@ export default function EnvioReportes() {
                     checked={reportesFinanciero}
                     onChange={setReportesFinanciero}
                     helpText="Incluye profit, gastos por categoría y recomendaciones"
+                  />
+                  
+                  <Checkbox
+                    label="Profit Completo - Métricas combinadas Shopify + Finanzas"
+                    checked={reportesProfitCompleto}
+                    onChange={setReportesProfitCompleto}
+                    disabled={tipo === 'año'}
+                    helpText={
+                      tipo === 'año'
+                        ? 'No disponible para vista anual'
+                        : 'Incluye ventas de Shopify, FEL y egresos para cálculo completo de profit'
+                    }
                   />
                   
                   <Checkbox

@@ -2,9 +2,10 @@ import { getGoogleSheetsData, getGoogleSheetsPagos } from './googleSheets.server
 import { processSheetData } from './processData.server';
 import { processPagosData } from './processPagos.server';
 import { parseUniversalDate, formatearFechaEspanol } from './dateUtils.server.js';
+import { getShopifyOrders, processShopifyOrders } from './shopifyOrders.server';
 
 export async function generateHTMLReport(options) {
-  const { tipo, dia, mes, anio, reportesFEL, reportesFinanciero, incluirComparacion } = options;
+  const { admin, tipo, dia, mes, anio, reportesFEL, reportesFinanciero, reportesProfitCompleto, incluirComparacion } = options;
   
   let htmlContent = '';
   let dataFEL = null;
@@ -24,6 +25,18 @@ export async function generateHTMLReport(options) {
     dataFinanciero = processPagosData(rawDataPagos, rawDataVentas, tipo, dia, mes, anio);
   }
   
+  // Calcular Profit Completo si está seleccionado
+  let dataProfitCompleto = null;
+  if (reportesProfitCompleto) {
+    // Obtener ventas de Shopify y procesar
+    const rawOrders = await getShopifyOrders(admin, tipo, dia, mes, anio);
+    const shopifyStats = processShopifyOrders(rawOrders, tipo, dia);
+    const totalShopify = shopifyStats.totalVentas;
+    const totalEgresos = dataFinanciero ? dataFinanciero.totalEgresos : 0;
+    const profitTotal = totalShopify - totalEgresos;
+    const marginTotal = totalShopify > 0 ? (profitTotal / totalShopify) * 100 : 0;
+    dataProfitCompleto = { totalShopify, totalEgresos, profitTotal, marginTotal };
+  }
   // Generar HTML
   htmlContent = generateHTMLTemplate({
     tipo,
@@ -32,18 +45,20 @@ export async function generateHTMLReport(options) {
     anio,
     dataFEL,
     dataFinanciero,
+    dataProfitCompleto,
     incluirComparacion
   });
   
   return {
     html: htmlContent,
     dataFEL,
-    dataFinanciero
+    dataFinanciero,
+    dataProfitCompleto
   };
 }
 
 function generateHTMLTemplate(params) {
-  const { tipo, dia, mes, anio, dataFEL, dataFinanciero, incluirComparacion } = params;
+  const { tipo, dia, mes, anio, dataFEL, dataFinanciero, dataProfitCompleto, incluirComparacion } = params;
   
   const getMonthName = (month) => {
     const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -370,6 +385,35 @@ function generateHTMLTemplate(params) {
           </table>
         </div>
       ` : ''}`;
+  }
+  // Profit Completo section
+  if (dataProfitCompleto) {
+    html += `
+      <!-- Profit Completo -->
+      <div class="metrics-summary" style="border-top: 2px solid #dee2e6; padding-top: 20px;">
+        <h2>📈 Profit Completo</h2>
+        <div class="metrics-grid">
+          <div class="metric-box">
+            <h3>🛒 Total Shopify</h3>
+            <p class="metric-value">Q ${formatNumber(dataProfitCompleto.totalShopify)}</p>
+          </div>
+          <div class="metric-box">
+            <h3>💸 Egresos</h3>
+            <p class="metric-value">Q ${formatNumber(dataProfitCompleto.totalEgresos)}</p>
+          </div>
+          <div class="metric-box">
+            <h3>💰 Profit</h3>
+            <p class="metric-value" style="color: ${dataProfitCompleto.profitTotal >= 0 ? '#28a745' : '#dc3545'}">
+              Q ${formatNumber(dataProfitCompleto.profitTotal)}
+            </p>
+          </div>
+          <div class="metric-box">
+            <h3>📈 Margen</h3>
+            <p class="metric-value">${dataProfitCompleto.marginTotal.toFixed(1)}%</p>
+          </div>
+        </div>
+      </div>
+    `;
   }
   
   // Footer
