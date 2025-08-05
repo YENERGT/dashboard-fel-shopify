@@ -170,35 +170,31 @@ export function processShopifyOrders(orders, tipo, dia) {
     clientesShopify: {},
     ventasPorEstadoFinanciero: {},
   };
+  // Helper para parsear montos numéricos de strings
+  const parseMoney = v => parseFloat(v) || 0;
   
-  orders.forEach(order => {
+  for (const order of orders) {
     // Solo contar órdenes pagadas
     if (order.displayFinancialStatus !== 'PAID' && 
         order.displayFinancialStatus !== 'PARTIALLY_PAID' &&
         order.displayFinancialStatus !== 'PENDING') {
-      return;
+      continue;
     }
-    
-    const total = parseFloat(order.currentTotalPriceSet.shopMoney.amount);
-    const descuento = parseFloat(order.totalDiscountsSet?.shopMoney?.amount || 0);
-    const devolucion = parseFloat(order.totalRefundedSet?.shopMoney?.amount || 0);
-    // Recuperar subtotal antes de descuentos y devoluciones
-    const subtotal = parseFloat(order.currentSubtotalPriceSet?.shopMoney?.amount || 0);
-    // Calcular ventas netas: bruto - descuentos - devoluciones
+    const total = parseMoney(order.currentTotalPriceSet.shopMoney.amount);
+    const descuento = parseMoney(order.totalDiscountsSet?.shopMoney?.amount);
+    const devolucion = parseMoney(order.totalRefundedSet?.shopMoney?.amount);
+    const subtotal = parseMoney(order.currentSubtotalPriceSet?.shopMoney?.amount);
     const neto = total - descuento - devolucion;
     // Sumar comisiones de transacciones
-    const comisiones = order.transactions?.reduce((sum, tx) => {
-      return sum + (parseFloat(tx.feeAmountSet?.shopMoney?.amount) || 0);
-    }, 0) || 0;
+    const comisiones = order.transactions?.reduce((sum, tx) => sum + parseMoney(tx.feeAmountSet?.shopMoney?.amount), 0) || 0;
     const fecha = new Date(order.createdAt);
     
-    stats.totalVentas += total;
-    // Usar ventas netas
-    stats.totalVentas = (stats.totalVentas - total) + neto;
+    // Acumular ventas netas directamente
+    stats.totalVentas += neto;
     stats.totalSubtotal += subtotal;
     stats.totalPedidos += 1;
-    stats.totalImpuestos += parseFloat(order.currentTotalTaxSet?.shopMoney?.amount || 0);
-    stats.totalEnvio += parseFloat(order.totalShippingPriceSet?.shopMoney?.amount || 0);
+    stats.totalImpuestos += parseMoney(order.currentTotalTaxSet?.shopMoney?.amount);
+    stats.totalEnvio += parseMoney(order.totalShippingPriceSet?.shopMoney?.amount);
     stats.totalDescuentos += descuento;
     stats.totalDevoluciones += devolucion;
     stats.totalComisiones += comisiones;
@@ -263,12 +259,12 @@ export function processShopifyOrders(orders, tipo, dia) {
       if (!stats.clientesShopify[cliente]) {
         stats.clientesShopify[cliente] = { total: 0, pedidos: 0 };
       }
-      stats.clientesShopify[cliente].total += total;
-      // Ajustar total de cliente a ventas netas
-      stats.clientesShopify[cliente].total = stats.clientesShopify[cliente].total - total + neto;
+      stats.clientesShopify[cliente].total += neto;
+      // Ajustar total de cliente a ventas netas acumulando neto
+      stats.clientesShopify[cliente].total += neto;
       stats.clientesShopify[cliente].pedidos += 1;
     }
-  });
+  }
   
   // Convertir objetos a arrays ordenados
   stats.topProductosShopify = Object.entries(stats.topProductosShopify)
