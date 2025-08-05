@@ -136,12 +136,19 @@ export default function Index() {
       link: "/app/analisis-financiero",
     },
     {
-      title: "📧 Envío de Reportes",
-      description: "Envía reportes automáticos por WhatsApp",
-      buttonText: "Configurar Envíos",
+      title: "💎 Profit Completo",
+      description: "Analiza ventas totales de Shopify, FEL y egresos desde datos reales de Shopify",
+      buttonText: "Ver Profit Completo",
       buttonPrimary: false,
-      link: "/app/envio-reportes",
+      link: "/app/profit-completo",
     },
+    {
+    title: "📧 Envío de Reportes",
+    description: "Envía reportes automáticos por WhatsApp",
+    buttonText: "Configurar Envíos",
+    buttonPrimary: false,
+    link: "/app/envio-reportes",
+  },
     {
       title: "⚙️ Configuración",
       description: "Configura tu conexión con Google Sheets",

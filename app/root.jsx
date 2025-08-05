@@ -111,6 +111,7 @@ export const links = () => [
   // Resource hints para navegación
   { rel: "prefetch", href: "/app/dashboard" },
   { rel: "prefetch", href: "/app/analisis-financiero" },
+  { rel: "prefetch", href: "/app/profit-completo" },
 ];
 
 export default function App() {

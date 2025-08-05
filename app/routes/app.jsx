@@ -32,6 +32,7 @@ export default function App() {
         </Link>
         <Link to="/app/dashboard">Analisis FEL</Link>
         <Link to="/app/analisis-financiero">Análisis Financiero</Link>
+        <Link to="/app/profit-completo">Profit Completo</Link>  {/* NUEVA LÍNEA */}
         <Link to="/app/envio-reportes">Envío de Reportes</Link>
         <Link to="/app/settings">Configuración</Link>
         <Link to="/app/additional">Additional page</Link>
