@@ -1,0 +1,15 @@
+libasound2
+libatk1.0-0
+libatk-bridge2.0-0
+libdrm2
+libxkbcommon0
+libgbm1
+libnss3
+libxss1
+libxcomposite1
+libxdamage1
+libxrender1
+libxrandr2
+libgtk-3-0
+libglib2.0-0
+libpango-1.0-0

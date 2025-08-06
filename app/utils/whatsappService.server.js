@@ -1,5 +1,6 @@
 import axios from 'axios';
 import FormData from 'form-data';
+import { Readable } from 'stream';
 import { parseUniversalDate, formatearFechaEspanol } from './dateUtils.server.js';
 
 // Configuración de WhatsApp API
@@ -94,14 +95,10 @@ export async function sendWhatsAppMessage(options) {
 // Función para subir PDF
 async function uploadPDFBuffer(pdfBuffer, filename) {
   const formData = new FormData();
-  
-  // Convertir buffer a stream
-  const { Readable } = await import('stream');
-  const stream = Readable.from(pdfBuffer);
-  
-  // Configurar FormData con todos los parámetros obligatorios
+  // Adjuntar los campos necesarios y el PDF como stream de Buffer
   formData.append('messaging_product', 'whatsapp');
-  formData.append('file', stream, {
+  const bufferStream = Readable.from([pdfBuffer]);
+  formData.append('file', bufferStream, {
     filename: filename,
     contentType: 'application/pdf'
   });

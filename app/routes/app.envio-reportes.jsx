@@ -155,7 +155,15 @@ if (metodoEnvio === 'whatsapp') {
       
       // Generar PDF del reporte
   console.log("Generando PDF del reporte...");
-  const pdfBuffer = await generatePDFBuffer(reportData.html);
+  let pdfBuffer;
+  try {
+    pdfBuffer = await generatePDFBuffer(reportData.html);
+    console.log(`PDF generado correctamente, bytes: ${pdfBuffer.length}`);
+  } catch (pdfError) {
+    console.error('Error generando PDF en ruta envio-reportes:', pdfError);
+    // Enviar mensaje de error detallado para diagnóstico
+    return json({ success: false, error: `Error generando PDF: ${pdfError.message}` }, { status: 500 });
+  }
   const pdfName = `reporte-${tipo}-${anio}${mes}${dia || ''}.pdf`;
       
       // Generar mensaje de texto y resumen para WhatsApp
