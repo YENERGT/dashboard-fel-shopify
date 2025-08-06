@@ -4,7 +4,9 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useNavigation,
 } from "@remix-run/react";
+import { useEffect } from "react";
 import polarisStyles from "@shopify/polaris/build/esm/styles.css?url";
 import tokensStyles from "./styles/tokens.css?url";
 import dashboardEnhancedStyles from "./styles/dashboard-enhanced.css?url";
@@ -114,6 +116,21 @@ export const links = () => [
   { rel: "prefetch", href: "/app/profit-completo" },
 ];
 
+// Component to display NProgress bar on route transitions
+function ProgressBar() {
+  const navigation = useNavigation();
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.NProgress) {
+      if (navigation.state !== 'idle') {
+        window.NProgress.start();
+      } else {
+        window.NProgress.done();
+      }
+    }
+  }, [navigation.state]);
+  return null;
+}
+
 export default function App() {
   return (
     <html>
@@ -147,6 +164,7 @@ export default function App() {
         <link rel="prefetch" href="/app/analisis-financiero" />
       </head>
       <body>
+        <ProgressBar />
         <Outlet />
         <ScrollRestoration />
         <Scripts />

@@ -163,10 +163,12 @@ export default function Dashboard() {
   
   // Mostrar loading bar en transiciones
   useEffect(() => {
-  if (navigation.state === "loading" && typeof window !== 'undefined' && window.NProgress) {
-    window.NProgress.start();
-  } else if (navigation.state !== "loading" && typeof window !== 'undefined' && window.NProgress) {
-    window.NProgress.done();
+  if (typeof window !== 'undefined' && window.NProgress) {
+    if (navigation.state !== "idle") {
+      window.NProgress.start();
+    } else {
+      window.NProgress.done();
+    }
   }
 }, [navigation.state]);
 
