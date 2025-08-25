@@ -1,21 +1,39 @@
 import puppeteer from 'puppeteer';
 
-// Singleton de navegador para reutilizar instancias y reducir overhead
-let browserPromise;
+// Browser lazy loading - solo cargar cuando se necesite
+let browserInstance = null;
+let browserTimeout = null;
+
 async function getBrowser() {
-  if (!browserPromise) {
+  if (browserInstance) {
+    // Resetear timeout si browser ya existe
+    clearTimeout(browserTimeout);
+  } else {
+    console.log('[PDF] Launching browser (memory will increase temporarily)...');
     const launchOptions = {
       headless: true,
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
         '--disable-dev-shm-usage',
-        '--single-process'
+        '--memory-pressure-off',
+        '--disable-background-timer-throttling',
+        '--disable-renderer-backgrounding'
       ]
     };
-    browserPromise = puppeteer.launch(launchOptions);
+    browserInstance = await puppeteer.launch(launchOptions);
   }
-  return browserPromise;
+  
+  // Auto-cerrar browser después de 2 minutos de inactividad
+  browserTimeout = setTimeout(async () => {
+    if (browserInstance) {
+      console.log('[PDF] Closing browser due to inactivity...');
+      await browserInstance.close();
+      browserInstance = null;
+    }
+  }, 2 * 60 * 1000);
+  
+  return browserInstance;
 }
 
 // Genera un buffer de PDF a partir de HTML
